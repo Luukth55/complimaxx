@@ -1,0 +1,5 @@
+{
+  "name": "Complimaxx",
+  "description": "Enterprise-grade AI audit generation tool for ISO/ISAE/NEN compliance. Generates full audit packages from process descriptions.",
+  "requestFramePermissions": []
+}
