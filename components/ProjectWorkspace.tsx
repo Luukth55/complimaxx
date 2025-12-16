@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ArrowRight, 
   ArrowLeft, 
@@ -19,7 +19,12 @@ import {
   X,
   Users,
   Plus,
-  Trash2
+  Trash2,
+  ChevronDown,
+  ChevronUp,
+  Database,
+  Zap,
+  Clock
 } from 'lucide-react';
 import { generateAuditPackage } from '../services/geminiService';
 import { AuditPackage, AppRoute } from '../types';
@@ -182,6 +187,9 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onComplete, navigat
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Accordion state
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
 
   // Form State
   const [processName, setProcessName] = useState('');
@@ -189,10 +197,13 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onComplete, navigat
   const [selectedFrameworks, setSelectedFrameworks] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Context Builder State
+  // Context Builder State - ENHANCED
   const [contextAnswers, setContextAnswers] = useState({
-    purpose: '',
+    operationalGoal: '',
+    trigger: '', // New: What starts the process?
+    volume: 'Daily', // New: Frequency/Volume
     systems: '',
+    dataSensitivity: 'Internal', // New: Confidentiality Level
     knownRisks: ''
   });
 
@@ -226,6 +237,23 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onComplete, navigat
     }
   };
 
+  const toggleCategory = (categoryName: string) => {
+    setExpandedCategories(prev => 
+      prev.includes(categoryName) 
+        ? prev.filter(c => c !== categoryName)
+        : [...prev, categoryName]
+    );
+  };
+
+  // Auto-expand categories when searching
+  useEffect(() => {
+    if (searchQuery) {
+        setExpandedCategories(FRAMEWORK_CATEGORIES.map(c => c.name));
+    } else {
+        setExpandedCategories([]);
+    }
+  }, [searchQuery]);
+
   const handleGenerate = async () => {
     if (!processName || !description || selectedFrameworks.length === 0) {
       setError("Please fill in all required fields.");
@@ -241,21 +269,31 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onComplete, navigat
       .map(s => `- ${s.role}: ${s.name}`)
       .join('\n');
 
-    // Combine context into description for the AI
+    // Combine context into description for the AI - ENHANCED PROMPT
     const fullPrompt = `
-      ${description}
+      PROCESS NAME: ${processName}
+      DESCRIPTION: ${description}
       
-      Additional Context:
-      - Purpose: ${contextAnswers.purpose}
-      - Systems involved: ${contextAnswers.systems}
-      - Known risks: ${contextAnswers.knownRisks}
+      OPERATIONAL CONTEXT (Critical for Process Flow & Test Plans):
+      - Primary Goal: ${contextAnswers.operationalGoal}
+      - Process Trigger (Start Event): ${contextAnswers.trigger}
+      - Frequency/Volume: ${contextAnswers.volume} (This determines automation needs and sampling size for Test Plans)
       
-      Involved Stakeholders (Use these for RACI Matrix):
+      TECHNICAL CONTEXT (Critical for Risk Heatmap & Controls):
+      - Systems Used: ${contextAnswers.systems}
+      - Data Classification: ${contextAnswers.dataSensitivity} (Use this to determine Impact Rating in Risk Heatmap)
+      - Known Risks/Pain Points: ${contextAnswers.knownRisks}
+      
+      STAKEHOLDERS (For RACI Matrix):
       ${stakeholdersList || 'No specific stakeholders provided, suggest standard roles.'}
     `;
 
     try {
       const data = await generateAuditPackage(processName, fullPrompt, selectedFrameworks);
+      
+      // FORCE TITLE OVERRIDE: Ensure the output title matches the user input
+      data.project_title = processName;
+
       onComplete(data);
     } catch (err: any) {
       console.error(err);
@@ -400,58 +438,75 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onComplete, navigat
                         </div>
                      </div>
 
-                     <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 bg-techBlack/50">
+                     <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4 bg-techBlack/50">
                         {filteredCategories.map((category) => {
                           const Icon = category.icon;
                           const hasSelection = category.frameworks.some(fw => selectedFrameworks.includes(fw));
+                          const isExpanded = expandedCategories.includes(category.name);
                           
                           return (
                             <div key={category.name} className={`rounded-xl border transition-all duration-300 ${
                                 hasSelection ? 'bg-obsidianNavy border-brightBlue/30' : 'bg-obsidianNavy/30 border-deepDivider'
                             }`}>
                                 {/* Category Header */}
-                                <div className="flex items-center p-4 border-b border-deepDivider/50">
-                                     <div className={`p-2 rounded-lg mr-3 ${hasSelection ? 'bg-brightBlue text-white' : 'bg-deepDivider text-steelGrey'}`}>
-                                        <Icon size={18} />
+                                <div 
+                                    className="flex items-center justify-between p-4 cursor-pointer hover:bg-white/5 transition-colors select-none"
+                                    onClick={() => toggleCategory(category.name)}
+                                >
+                                     <div className="flex items-center">
+                                         <div className={`p-2 rounded-lg mr-3 ${hasSelection ? 'bg-brightBlue text-white' : 'bg-deepDivider text-steelGrey'}`}>
+                                            <Icon size={18} />
+                                         </div>
+                                         <div>
+                                            <h4 className={`text-sm font-bold ${hasSelection ? 'text-white' : 'text-steelGrey'}`}>{category.name}</h4>
+                                            {hasSelection && (
+                                                <div className="text-xs text-brightBlue mt-1 flex items-center animate-fadeIn">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-brightBlue mr-1.5"></span>
+                                                    {category.frameworks.filter(fw => selectedFrameworks.includes(fw)).length} selected
+                                                </div>
+                                            )}
+                                         </div>
                                      </div>
-                                     <div>
-                                        <h4 className={`text-sm font-bold ${hasSelection ? 'text-white' : 'text-steelGrey'}`}>{category.name}</h4>
+                                     <div className={`text-steelGrey transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+                                         <ChevronDown size={18} />
                                      </div>
                                 </div>
                                 
                                 {/* Frameworks */}
-                                <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                                     {category.frameworks.map((fw) => {
-                                          const isSelected = selectedFrameworks.includes(fw);
-                                          return (
-                                            <div 
-                                              key={fw}
-                                              onClick={() => toggleFramework(fw)}
-                                              className={`cursor-pointer px-3 py-2.5 rounded-lg border text-sm transition-all flex items-start ${
-                                                isSelected 
-                                                  ? 'bg-brightBlue/10 border-brightBlue text-white shadow-inner' 
-                                                  : 'bg-techBlack border-deepDivider text-steelGrey hover:border-steelGrey/50 hover:bg-white/5'
-                                              }`}
-                                            >
-                                              <div className={`mt-0.5 mr-3 w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
-                                                isSelected 
-                                                  ? 'bg-brightBlue border-brightBlue' 
-                                                  : 'border-steelGrey/30'
-                                              }`}>
-                                                {isSelected && <Check size={10} className="text-white" />}
-                                              </div>
-                                              <span className="leading-tight">{fw}</span>
-                                            </div>
-                                          );
-                                    })}
-                                </div>
+                                {isExpanded && (
+                                    <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3 border-t border-deepDivider/50 animate-fadeIn bg-black/10">
+                                         {category.frameworks.map((fw) => {
+                                              const isSelected = selectedFrameworks.includes(fw);
+                                              return (
+                                                <div 
+                                                  key={fw}
+                                                  onClick={() => toggleFramework(fw)}
+                                                  className={`cursor-pointer px-3 py-2.5 rounded-lg border text-sm transition-all flex items-start ${
+                                                    isSelected 
+                                                      ? 'bg-brightBlue/10 border-brightBlue text-white shadow-inner' 
+                                                      : 'bg-techBlack border-deepDivider text-steelGrey hover:border-steelGrey/50 hover:bg-white/5'
+                                                  }`}
+                                                >
+                                                  <div className={`mt-0.5 mr-3 w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
+                                                    isSelected 
+                                                      ? 'bg-brightBlue border-brightBlue' 
+                                                      : 'border-steelGrey/30'
+                                                  }`}>
+                                                    {isSelected && <Check size={10} className="text-white" />}
+                                                  </div>
+                                                  <span className="leading-tight">{fw}</span>
+                                                </div>
+                                              );
+                                        })}
+                                    </div>
+                                )}
                             </div>
                           );
                         })}
                         
                         {filteredCategories.length === 0 && (
                            <div className="text-center py-12 text-steelGrey">
-                               <p>No frameworks found.</p>
+                               <p>No frameworks found matching "{searchQuery}".</p>
                            </div>
                         )}
                      </div>
@@ -497,48 +552,92 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onComplete, navigat
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* COLUMN 1: OPERATIONAL CONTEXT (Flow & Test Plans) */}
                 <div className="space-y-6">
+                    <h3 className="text-white font-bold flex items-center border-b border-deepDivider pb-2">
+                        <Zap size={16} className="text-yellow-500 mr-2" /> Operational Context
+                    </h3>
+                    
                     <div>
-                        <label className="block text-sm font-bold text-white mb-2 flex items-center">
-                            <ArrowRight size={14} className="text-brightBlue mr-2"/>
-                            What is the primary goal?
-                        </label>
+                        <label className="block text-xs font-bold text-steelGrey mb-1">Primary Operational Goal</label>
                         <input 
                             type="text" 
-                            className="w-full bg-[#080C14] border border-deepDivider rounded-lg px-4 py-3 text-white focus:outline-none focus:border-brightBlue"
+                            className="w-full bg-[#080C14] border border-deepDivider rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brightBlue"
                             placeholder="e.g. Ensure accurate payroll data..."
-                            value={contextAnswers.purpose}
-                            onChange={(e) => setContextAnswers({...contextAnswers, purpose: e.target.value})}
+                            value={contextAnswers.operationalGoal}
+                            onChange={(e) => setContextAnswers({...contextAnswers, operationalGoal: e.target.value})}
                         />
-                        <p className="text-xs text-steelGrey mt-2 ml-1">Example: "To onboard new vendors within 3 days while ensuring tax compliance."</p>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-bold text-white mb-2 flex items-center">
-                             <Server size={14} className="text-brightBlue mr-2"/>
-                             Which IT systems are used?
-                        </label>
-                        <input 
-                            type="text" 
-                            className="w-full bg-[#080C14] border border-deepDivider rounded-lg px-4 py-3 text-white focus:outline-none focus:border-brightBlue"
-                            placeholder="e.g. SAP, Salesforce, Jira..."
-                            value={contextAnswers.systems}
-                            onChange={(e) => setContextAnswers({...contextAnswers, systems: e.target.value})}
-                        />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-bold text-steelGrey mb-1">Process Trigger</label>
+                            <input 
+                                type="text" 
+                                className="w-full bg-[#080C14] border border-deepDivider rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brightBlue"
+                                placeholder="e.g. New Ticket"
+                                value={contextAnswers.trigger}
+                                onChange={(e) => setContextAnswers({...contextAnswers, trigger: e.target.value})}
+                            />
+                        </div>
+                        <div>
+                             <label className="block text-xs font-bold text-steelGrey mb-1">Frequency / Volume</label>
+                             <select 
+                                className="w-full bg-[#080C14] border border-deepDivider rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brightBlue"
+                                value={contextAnswers.volume}
+                                onChange={(e) => setContextAnswers({...contextAnswers, volume: e.target.value})}
+                             >
+                                 <option>Daily (High Volume)</option>
+                                 <option>Weekly</option>
+                                 <option>Monthly</option>
+                                 <option>Quarterly</option>
+                                 <option>Ad-hoc / Manual</option>
+                             </select>
+                        </div>
                     </div>
                 </div>
 
-                <div>
-                     <label className="block text-sm font-bold text-white mb-2 flex items-center">
-                         <AlertTriangle size={14} className="text-riskHigh mr-2"/>
-                         Are there specific risk concerns?
-                     </label>
-                     <textarea 
-                        className="w-full bg-[#080C14] border border-deepDivider rounded-lg px-4 py-3 text-white focus:outline-none focus:border-brightBlue h-40"
-                        placeholder="Optional: Mention any past incidents, specific regulatory fears, or areas where controls are currently weak..."
-                        value={contextAnswers.knownRisks}
-                        onChange={(e) => setContextAnswers({...contextAnswers, knownRisks: e.target.value})}
-                    />
+                {/* COLUMN 2: TECHNICAL CONTEXT (Heatmap & Controls) */}
+                <div className="space-y-6">
+                     <h3 className="text-white font-bold flex items-center border-b border-deepDivider pb-2">
+                        <Shield size={16} className="text-brightBlue mr-2" /> Risk & Data Profile
+                    </h3>
+
+                    <div className="grid grid-cols-2 gap-4">
+                         <div>
+                            <label className="block text-xs font-bold text-steelGrey mb-1">IT Systems Used</label>
+                            <input 
+                                type="text" 
+                                className="w-full bg-[#080C14] border border-deepDivider rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brightBlue"
+                                placeholder="e.g. SAP, Jira"
+                                value={contextAnswers.systems}
+                                onChange={(e) => setContextAnswers({...contextAnswers, systems: e.target.value})}
+                            />
+                         </div>
+                         <div>
+                             <label className="block text-xs font-bold text-steelGrey mb-1">Data Sensitivity</label>
+                             <select 
+                                className="w-full bg-[#080C14] border border-deepDivider rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brightBlue"
+                                value={contextAnswers.dataSensitivity}
+                                onChange={(e) => setContextAnswers({...contextAnswers, dataSensitivity: e.target.value})}
+                             >
+                                 <option>Public / Low</option>
+                                 <option>Internal Only</option>
+                                 <option>Confidential (PII/Financial)</option>
+                                 <option>Restricted (Critical IP)</option>
+                             </select>
+                        </div>
+                    </div>
+
+                    <div>
+                         <label className="block text-xs font-bold text-steelGrey mb-1">Known Risks / Pain Points</label>
+                         <textarea 
+                            className="w-full bg-[#080C14] border border-deepDivider rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brightBlue h-20 resize-none"
+                            placeholder="e.g. Previous audit finding regarding access control..."
+                            value={contextAnswers.knownRisks}
+                            onChange={(e) => setContextAnswers({...contextAnswers, knownRisks: e.target.value})}
+                        />
+                    </div>
                 </div>
             </div>
             

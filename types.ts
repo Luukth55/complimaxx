@@ -99,14 +99,34 @@ export interface FrameworkMapItem {
   articles: Array<{ reference: string; linked_controls: string[] }>;
 }
 
+export interface ChecklistFile {
+  name: string;
+  date: string;
+  size: string;
+  type: string;
+}
+
 export interface ChecklistItem {
   id: string;
-  requirement: string;
-  status: 'Not Started' | 'In Progress' | 'Complete';
-  evidence: boolean;
+  requirement: string; // The Task Title
+  description?: string; // Detailed description
+  status: 'Not Started' | 'In Progress' | 'Review' | 'Complete';
   assignedTo: string;
   dueDate: string;
   framework: string;
+  
+  // New Fields
+  category: 'Audit Prep' | 'Control' | 'Evidence' | 'Gap Remediation' | 'Renewal';
+  priority: 'High' | 'Medium' | 'Low';
+  recurrence: 'One-time' | 'Monthly' | 'Quarterly' | 'Yearly';
+  
+  // Evidence Handling
+  evidenceNotes?: string;
+  evidenceFiles?: ChecklistFile[];
+
+  // Meta
+  linkedControl?: string;
+  linkedRisk?: string;
 }
 
 export interface Gap {
@@ -120,7 +140,15 @@ export interface Gap {
   dueDate: string;
 }
 
+export interface AuditMeta {
+    last_audit_date: string; // ISO Date string YYYY-MM-DD
+    next_audit_date: string; // ISO Date string YYYY-MM-DD
+    frequency: 'Annual' | 'Semi-Annual' | 'Quarterly';
+}
+
 export interface AuditPackage {
+  id?: string; // Database ID
+  user_id?: string; // Owner ID
   project_title?: string;
   process_flow: ProcessFlowStep[];
   raci_matrix: RaciMatrixItem[];
@@ -135,6 +163,7 @@ export interface AuditPackage {
   savedAt?: string;
   checklist?: ChecklistItem[]; // Persisted checklist state
   gaps?: Gap[]; // Persisted gap tracking state
+  audit_meta?: AuditMeta; // Track renewal dates
 }
 
 export enum AppRoute {
@@ -146,7 +175,25 @@ export enum AppRoute {
   CHECKLIST = 'checklist',
   RENEWAL = 'renewal',
   TEAM = 'team',
-  SETTINGS = 'settings'
+  SETTINGS = 'settings',
+  
+  // Public Content Pages
+  PRODUCT = 'product', // NEW ROUTE
+  FEATURES = 'features',
+  PRICING = 'pricing',
+  GET_STARTED = 'get_started',
+  ABOUT = 'about',
+  CONTACT = 'contact',
+  LEGAL = 'legal',
+  PRIVACY = 'privacy',
+  TERMS = 'terms',
+  COOKIES = 'cookies',
+  DPA = 'dpa',
+  SECURITY = 'security',
+  HELP = 'help',
+  TUTORIALS = 'tutorials',
+  FAQ = 'faq',
+  BLOG = 'blog'
 }
 
 export interface TeamMember {

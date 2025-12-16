@@ -229,6 +229,7 @@ export const generateAuditPackage = async (
 
   const ai = new GoogleGenAI({ apiKey });
 
+  // OPTIMIZED PROMPT: Reduced item counts to prevent JSON truncation
   const prompt = `
     You are an expert Chief Audit Executive (CAE) and Enterprise Compliance Architect.
     Your task is to perform a DEEP ANALYTICAL REVIEW and generate a comprehensive audit package for the process described below.
@@ -250,7 +251,7 @@ export const generateAuditPackage = async (
     OUTPUT SPECIFICATIONS (STRICT JSON):
     
     1. **Process Flow (Pxx)**: 
-       - Break down the process into 5-10 logical, granular steps.
+       - Break down the process into 5-8 logical, granular steps.
        - Identify 'Risk Hotspots' for each step.
     
     2. **RACI Matrix** (STRICT ADHERENCE TO METHODOLOGY): 
@@ -263,27 +264,27 @@ export const generateAuditPackage = async (
          - Use 'I' (Informed) for those notified after the fact.
     
     3. **Risks (Rxx)**: 
-       - Generate 15-20 specific risks.
+       - Generate 8-10 specific, high-impact risks.
        - Categorize them (Operational, Compliance, Financial, IT, Reputational).
     
     4. **Controls (Cxx)**: 
-       - Generate 20-25 controls.
+       - Generate 10-15 strong, testable controls.
        - LINK every control to at least one Risk.
        - POPULATE 'framework_mapping' for every control with specific references.
        - POPULATE 'evidence_required' with specific Evidence IDs (Exx) that prove this control is effective.
     
     5. **Control Objectives (COxx)**:
-       - Define objectives that group risks and controls.
+       - Define 3-5 objectives that group risks and controls.
     
     6. **Key Controls (KCxx)**:
-       - Select critical controls from the main list.
+       - Select 3-5 critical controls from the main list.
     
     7. **Test Plans (Txx)**:
-       - Create detailed test plans for the Key Controls.
+       - Create detailed test plans for the Key Controls (match the Key Controls count).
        - Step-by-step instructions for an external auditor.
     
     8. **Evidence Checklist (Exx)**:
-       - Generate 50-80 specific evidence items (logs, screenshots, policies).
+       - Generate 15-25 specific evidence items (logs, screenshots, policies).
        - Ensure IDs (E01, E02...) are referenced in the Controls 'evidence_required' field.
 
     9. **Readiness Score**:
@@ -305,7 +306,7 @@ export const generateAuditPackage = async (
       config: {
         responseMimeType: 'application/json',
         responseSchema: auditPackageSchema,
-        thinkingConfig: { thinkingBudget: 4096 }, // Enable thinking for deep analysis
+        thinkingConfig: { thinkingBudget: 2048 }, // Adjusted budget to prevent token starvation for output
         temperature: 0.2, 
       },
     });
@@ -327,6 +328,10 @@ export const generateAuditPackage = async (
 
   } catch (error) {
     console.error("Gemini API Error:", error);
+    // If we catch a syntax error, it might be due to truncation.
+    if (error instanceof SyntaxError) {
+        throw new Error("The analysis was too complex and the response was truncated. Please try reducing the process scope or description.");
+    }
     throw error;
   }
 };

@@ -18,20 +18,100 @@ import {
   Play,
   RefreshCw,
   Search,
-  Database
+  Database,
+  Scale,
+  Leaf,
+  Server,
+  Activity,
+  Loader2
 } from 'lucide-react';
+import { AppRoute } from '../types';
 
 interface LandingPageProps {
-  onLogin: () => void;
+  onLogin: (email: string, pass: string, isSignup: boolean) => Promise<any>;
+  navigate: (route: AppRoute) => void;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onLogin, navigate }) => {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+  const [frameworksExpanded, setFrameworksExpanded] = useState(false);
+  
+  // Auth State
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
 
   const toggleFaq = (index: number) => {
     setOpenFaqIndex(openFaqIndex === index ? null : index);
   };
+
+  const handleAuthSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setAuthLoading(true);
+      setAuthError('');
+      
+      try {
+          const { error } = await onLogin(email, password, isSignUp);
+          if (error) {
+              setAuthError(error.message);
+          } else {
+             // Success is handled by App.tsx session listener
+          }
+      } catch (err: any) {
+          setAuthError(err.message || "Authentication failed");
+      } finally {
+          setAuthLoading(false);
+      }
+  };
+
+  const openAuth = (signup = false) => {
+      setIsSignUp(signup);
+      setShowAuthModal(true);
+      setAuthError('');
+  };
+
+  const FRAMEWORK_GROUPS = [
+    {
+      category: "Security & Cybersecurity",
+      icon: Shield,
+      count: 24,
+      items: ["ISO 27001", "NIST CSF", "SOC 2", "CIS v8", "CMMC 2.0", "PCI DSS", "ISO 27002", "FedRAMP", "SWIFT CSP", "Cyber Essentials"]
+    },
+    {
+      category: "Privacy & Data Protection",
+      icon: Lock,
+      count: 18,
+      items: ["GDPR", "CCPA/CPRA", "HIPAA", "ISO 27701", "LGPD", "POPIA", "PIPEDA", "DPA 2018", "ePrivacy", "COPPA"]
+    },
+    {
+      category: "Risk & Governance",
+      icon: Scale,
+      count: 14,
+      items: ["COSO ERM", "ISO 31000", "SOX", "Internal Control", "Basel III", "Solvency II", "DORA", "GLBA", "FCPA"]
+    },
+    {
+      category: "IT & Cloud",
+      icon: Server,
+      count: 12,
+      items: ["ISO 20000", "ITIL v4", "COBIT 2019", "CSA STAR", "ISO 27017", "ISO 27018", "NIS2", "SSAE 18"]
+    },
+    {
+      category: "ESG & Health",
+      icon: Leaf,
+      count: 15,
+      items: ["ISO 14001", "ISO 45001", "ESG Reporting", "SASB", "GRI Standards", "TCFD", "CSRD", "FDA 21 CFR", "GxP"]
+    },
+    {
+      category: "Industry Specific",
+      icon: Globe,
+      count: 13,
+      items: ["TISAX (Auto)", "NERC CIP (Energy)", "HDS (Health)", "IEC 62443 (Industrial)", "DO-178C (Aero)", "IATF 16949", "MPA"]
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-techBlack font-sans text-white overflow-x-hidden selection:bg-brightBlue/30">
@@ -44,17 +124,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
           </div>
           
           <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-steelGrey">
-            <a href="#product" className="hover:text-white transition-colors">Product</a>
-            <a href="#features" className="hover:text-white transition-colors">Features</a>
-            <a href="#how-it-works" className="hover:text-white transition-colors">How it Works</a>
-            <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-            <a href="#resources" className="hover:text-white transition-colors">Resources</a>
+            <button onClick={() => navigate(AppRoute.PRODUCT)} className="hover:text-white transition-colors">Product</button>
+            <button onClick={() => navigate(AppRoute.FEATURES)} className="hover:text-white transition-colors">Features</button>
+            <a href="#frameworks" className="hover:text-white transition-colors">Frameworks</a>
+            <button onClick={() => navigate(AppRoute.PRICING)} className="hover:text-white transition-colors">Pricing</button>
           </div>
 
           <div className="flex items-center gap-4">
-             <button onClick={onLogin} className="text-sm font-bold text-white hover:text-brightBlue transition-colors">Login</button>
+             <button onClick={() => openAuth(false)} className="text-sm font-bold text-white hover:text-brightBlue transition-colors">Login</button>
              <button 
-                onClick={onLogin}
+                onClick={() => openAuth(true)}
                 className="bg-white text-techBlack hover:bg-gray-100 px-5 py-2 rounded-full font-bold text-sm transition-all shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:shadow-[0_0_20px_rgba(255,255,255,0.3)]"
             >
                 Start Free Trial
@@ -70,20 +149,20 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
         <div className="absolute top-20 right-0 w-[400px] h-[400px] bg-purple-500/5 rounded-full blur-[100px] -z-10"></div>
         
         <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8 max-w-5xl mx-auto leading-tight">
-          Turn Compliance Chaos Into <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-brightBlue to-purple-400">Audit-Ready Packages in Minutes.</span>
+          The Complete AI Platform for <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-brightBlue to-purple-400">Audit, Risk & Compliance</span>
         </h1>
         
         <p className="text-xl text-steelGrey max-w-3xl mx-auto mb-10 leading-relaxed">
-          Complimaxx generates complete ISO/NIST/SOC2 audit documentation — process flows, RACI, risks, controls, test plans, evidence lists — all in one click.
+          From cybersecurity to privacy, auditing, governance, and operational risk. Generate complete audit packages for 96+ frameworks including ISO, NIST, SOC2, GDPR, and COBIT in minutes.
         </p>
         
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
-          <button onClick={onLogin} className="bg-brightBlue hover:bg-blue-600 text-white px-8 py-4 rounded-full font-bold text-lg shadow-[0_0_30px_rgba(0,140,255,0.3)] hover:shadow-[0_0_40px_rgba(0,140,255,0.5)] transition-all flex items-center transform hover:-translate-y-1">
+          <button onClick={() => openAuth(true)} className="bg-brightBlue hover:bg-blue-600 text-white px-8 py-4 rounded-full font-bold text-lg shadow-[0_0_30px_rgba(0,140,255,0.3)] hover:shadow-[0_0_40px_rgba(0,140,255,0.5)] transition-all flex items-center transform hover:-translate-y-1">
             Start Free 3-Day Trial <ArrowRight size={20} className="ml-2" />
           </button>
-          <button className="px-8 py-4 rounded-full border border-deepDivider text-white hover:bg-white/5 font-bold text-lg transition-colors flex items-center">
-            <Play size={18} className="mr-2 text-brightBlue" /> See Live Demo
+          <button onClick={() => navigate(AppRoute.PRODUCT)} className="px-8 py-4 rounded-full border border-deepDivider text-white hover:bg-white/5 font-bold text-lg transition-colors flex items-center">
+            <Play size={18} className="mr-2 text-brightBlue" /> Product Tour
           </button>
         </div>
 
@@ -235,6 +314,78 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
         </div>
       </section>
 
+      {/* 3.5. NEW FRAMEWORKS SECTION */}
+      <section id="frameworks" className="py-12 px-6 max-w-7xl mx-auto">
+        <div className="bg-obsidianNavy border border-deepDivider rounded-3xl overflow-hidden shadow-2xl relative transition-all duration-500 ease-in-out">
+           <div 
+             onClick={() => setFrameworksExpanded(!frameworksExpanded)}
+             className="cursor-pointer bg-gradient-to-b from-white/5 to-transparent p-8 md:p-12 text-center"
+           >
+              <span className="inline-block px-4 py-1.5 rounded-full bg-brightBlue/10 text-brightBlue text-xs font-bold uppercase tracking-wider mb-4 border border-brightBlue/20">
+                Unified Coverage
+              </span>
+              <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">Supports 96 Global Compliance Frameworks</h2>
+              <p className="text-xl text-steelGrey max-w-3xl mx-auto mb-10">
+                From cybersecurity to privacy, auditing, governance, financial reporting, and operational risk — your entire compliance landscape in one platform.
+              </p>
+
+              {!frameworksExpanded && (
+                  <div className="animate-fadeIn">
+                      <div className="flex flex-wrap justify-center gap-4 md:gap-8 mb-8 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
+                          {FRAMEWORK_GROUPS.slice(0,6).map((g, i) => (
+                             <div key={i} className="flex flex-col items-center">
+                                 <div className="p-4 rounded-xl bg-black/40 border border-deepDivider mb-2">
+                                    <g.icon size={28} className="text-steelGrey" />
+                                 </div>
+                                 <span className="text-xs font-bold text-steelGrey uppercase tracking-wide">{g.category.split(' ')[0]}</span>
+                             </div>
+                          ))}
+                      </div>
+                      <button className="bg-techBlack border border-deepDivider hover:border-brightBlue text-white px-8 py-3 rounded-full font-bold flex items-center mx-auto transition-all group">
+                         Explore All 96 Frameworks <ChevronDown size={20} className="ml-2 group-hover:translate-y-1 transition-transform" />
+                      </button>
+                  </div>
+              )}
+           </div>
+
+           {frameworksExpanded && (
+             <div className="px-8 md:px-12 pb-12 animate-fadeIn bg-techBlack/30">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {FRAMEWORK_GROUPS.map((group, idx) => (
+                        <div key={idx} className="bg-[#080C14] border border-deepDivider rounded-xl p-6 hover:border-brightBlue/30 transition-colors">
+                            <div className="flex items-center mb-4">
+                                <div className="p-2.5 rounded-lg bg-deepDivider/50 text-brightBlue mr-3">
+                                    <group.icon size={20} />
+                                </div>
+                                <h3 className="font-bold text-white">{group.category}</h3>
+                                <span className="ml-auto text-xs font-bold text-steelGrey bg-deepDivider px-2 py-1 rounded">
+                                    {group.count}
+                                </span>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {group.items.map((fw, fidx) => (
+                                    <span key={fidx} className="text-xs text-steelGrey bg-obsidianNavy border border-deepDivider px-2 py-1 rounded">
+                                        {fw}
+                                    </span>
+                                ))}
+                                <span className="text-xs text-brightBlue px-2 py-1 opacity-70 cursor-pointer hover:opacity-100">+ more</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                <div className="text-center mt-10">
+                     <button 
+                        onClick={(e) => { e.stopPropagation(); setFrameworksExpanded(false); }}
+                        className="text-steelGrey hover:text-white flex items-center mx-auto text-sm font-medium"
+                     >
+                         <ChevronUp size={16} className="mr-2" /> Collapse List
+                     </button>
+                </div>
+             </div>
+           )}
+        </div>
+      </section>
+
       {/* 4. HOW IT WORKS SECTION */}
       <section id="how-it-works" className="py-24 bg-[#080C14] border-y border-deepDivider">
         <div className="max-w-7xl mx-auto px-6">
@@ -256,7 +407,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
                 <div className="text-center relative z-10">
                     <div className="w-24 h-24 bg-obsidianNavy border-2 border-purple-500 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-8 shadow-[0_0_20px_rgba(168,85,247,0.2)]">2</div>
                     <h3 className="text-xl font-bold text-white mb-3">Select frameworks</h3>
-                    <p className="text-steelGrey max-w-xs mx-auto">Choose ISO 27001, NIST CSF, SOC 2, GDPR, or any of the 96 supported frameworks.</p>
+                    <p className="text-steelGrey max-w-xs mx-auto">Choose from 96+ supported frameworks including ISO, NIST, SOC 2, HIPAA, and GDPR.</p>
                 </div>
 
                 <div className="text-center relative z-10">
@@ -267,7 +418,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
             </div>
 
             <div className="mt-16 text-center">
-                 <button onClick={onLogin} className="text-brightBlue hover:text-white font-bold text-lg flex items-center justify-center mx-auto group">
+                 <button onClick={() => openAuth(true)} className="text-brightBlue hover:text-white font-bold text-lg flex items-center justify-center mx-auto group">
                     Generate Your First Audit Package <ArrowRight size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />
                  </button>
             </div>
@@ -302,10 +453,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
                  <p className="text-steelGrey text-sm mb-6 h-10">For solo founders or small teams starting with compliance.</p>
                  <div className="text-4xl font-bold text-white mb-6">€99<span className="text-lg text-steelGrey font-normal">/mo</span></div>
                  
-                 <button onClick={onLogin} className="w-full bg-deepDivider hover:bg-white/10 text-white font-bold py-3 rounded-lg mb-8 transition-colors">Start Trial</button>
+                 <button onClick={() => openAuth(true)} className="w-full bg-deepDivider hover:bg-white/10 text-white font-bold py-3 rounded-lg mb-8 transition-colors">Start Trial</button>
                  
                  <ul className="space-y-4 text-sm text-steelGrey">
-                     <li className="flex items-center"><Check size={16} className="text-white mr-3 shrink-0"/> 2 Frameworks (ISO + SOC2)</li>
+                     <li className="flex items-center"><Check size={16} className="text-white mr-3 shrink-0"/> 2 Frameworks of choice</li>
                      <li className="flex items-center"><Check size={16} className="text-white mr-3 shrink-0"/> 1 User</li>
                      <li className="flex items-center"><Check size={16} className="text-white mr-3 shrink-0"/> 15 Processes / month</li>
                      <li className="flex items-center"><Check size={16} className="text-white mr-3 shrink-0"/> All Features Included</li>
@@ -322,7 +473,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
                  <p className="text-steelGrey text-sm mb-6 h-10">For growing teams managing multiple audits.</p>
                  <div className="text-4xl font-bold text-white mb-6">€299<span className="text-lg text-steelGrey font-normal">/mo</span></div>
                  
-                 <button onClick={onLogin} className="w-full bg-brightBlue hover:bg-blue-600 text-white font-bold py-3 rounded-lg mb-8 transition-colors shadow-lg shadow-brightBlue/20">Start Trial</button>
+                 <button onClick={() => openAuth(true)} className="w-full bg-brightBlue hover:bg-blue-600 text-white font-bold py-3 rounded-lg mb-8 transition-colors shadow-lg shadow-brightBlue/20">Start Trial</button>
                  
                  <ul className="space-y-4 text-sm text-white">
                      <li className="flex items-center"><Check size={16} className="text-brightBlue mr-3 shrink-0"/> 10 Frameworks</li>
@@ -453,7 +604,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
              <p className="text-xl text-steelGrey mb-10 max-w-2xl mx-auto relative z-10">
                  Simplify compliance. Save months of work.
              </p>
-             <button onClick={onLogin} className="relative z-10 bg-white text-techBlack hover:bg-gray-100 px-8 py-4 rounded-full font-bold text-lg transition-all shadow-xl hover:shadow-2xl hover:scale-105">
+             <button onClick={() => openAuth(true)} className="relative z-10 bg-white text-techBlack hover:bg-gray-100 px-8 py-4 rounded-full font-bold text-lg transition-all shadow-xl hover:shadow-2xl hover:scale-105">
                 Start Free 3-Day Trial
              </button>
          </div>
@@ -468,43 +619,42 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
                     <span className="text-lg font-bold tracking-tight text-white">Complimaxx</span>
                 </div>
                 <p className="text-steelGrey text-sm mb-4">
-                    The enterprise AI audit platform for ISO, SOC 2, and more.
+                    The Complete AI Platform for Audit, Risk & Compliance.
                 </p>
             </div>
             
             <div>
                 <h4 className="font-bold text-white mb-4">Product</h4>
                 <ul className="space-y-3 text-sm text-steelGrey">
-                    <li><a href="#" className="hover:text-brightBlue transition-colors">Product</a></li>
-                    <li><a href="#" className="hover:text-brightBlue transition-colors">Features</a></li>
-                    <li><a href="#" className="hover:text-brightBlue transition-colors">Pricing</a></li>
-                    <li><a href="#" className="hover:text-brightBlue transition-colors">Get Started</a></li>
+                    <li><button onClick={() => navigate(AppRoute.PRODUCT)} className="hover:text-brightBlue transition-colors">Product</button></li>
+                    <li><button onClick={() => navigate(AppRoute.FEATURES)} className="hover:text-brightBlue transition-colors">Features</button></li>
+                    <li><button onClick={() => navigate(AppRoute.PRICING)} className="hover:text-brightBlue transition-colors">Pricing</button></li>
+                    <li><button onClick={() => navigate(AppRoute.GET_STARTED)} className="hover:text-brightBlue transition-colors">Get Started</button></li>
                 </ul>
             </div>
 
             <div>
                 <h4 className="font-bold text-white mb-4">Company</h4>
                 <ul className="space-y-3 text-sm text-steelGrey">
-                    <li><a href="#" className="hover:text-brightBlue transition-colors">About Us</a></li>
-                    <li><a href="#" className="hover:text-brightBlue transition-colors">Contact</a></li>
-                    <li><a href="#" className="hover:text-brightBlue transition-colors">Legal</a></li>
-                    <li><a href="#" className="hover:text-brightBlue transition-colors">Privacy Policy</a></li>
-                    <li><a href="#" className="hover:text-brightBlue transition-colors">Terms of Service</a></li>
-                    <li><a href="#" className="hover:text-brightBlue transition-colors">Cookie Policy</a></li>
-                    <li><a href="#" className="hover:text-brightBlue transition-colors">Data Processing Agreement</a></li>
-                    <li><a href="#" className="hover:text-brightBlue transition-colors">Security</a></li>
+                    <li><button onClick={() => navigate(AppRoute.ABOUT)} className="hover:text-brightBlue transition-colors">About Us</button></li>
+                    <li><button onClick={() => navigate(AppRoute.CONTACT)} className="hover:text-brightBlue transition-colors">Contact</button></li>
+                    <li><button onClick={() => navigate(AppRoute.LEGAL)} className="hover:text-brightBlue transition-colors">Legal</button></li>
+                    <li><button onClick={() => navigate(AppRoute.PRIVACY)} className="hover:text-brightBlue transition-colors">Privacy Policy</button></li>
+                    <li><button onClick={() => navigate(AppRoute.TERMS)} className="hover:text-brightBlue transition-colors">Terms of Service</button></li>
+                    <li><button onClick={() => navigate(AppRoute.COOKIES)} className="hover:text-brightBlue transition-colors">Cookie Policy</button></li>
+                    <li><button onClick={() => navigate(AppRoute.DPA)} className="hover:text-brightBlue transition-colors">Data Processing Agreement</button></li>
+                    <li><button onClick={() => navigate(AppRoute.SECURITY)} className="hover:text-brightBlue transition-colors">Security</button></li>
                 </ul>
             </div>
 
             <div>
                 <h4 className="font-bold text-white mb-4">Support & Social</h4>
                 <ul className="space-y-3 text-sm text-steelGrey">
-                    <li><a href="#" className="hover:text-brightBlue transition-colors">Help Center</a></li>
-                    <li><a href="#" className="hover:text-brightBlue transition-colors">Tutorials</a></li>
-                    <li><a href="#" className="hover:text-brightBlue transition-colors">FAQ</a></li>
-                    <li><a href="#" className="hover:text-brightBlue transition-colors">LinkedIn</a></li>
-                    <li><a href="#" className="hover:text-brightBlue transition-colors">Twitter</a></li>
-                    <li><a href="#" className="hover:text-brightBlue transition-colors">Newsletter Signup</a></li>
+                    <li><button onClick={() => navigate(AppRoute.HELP)} className="hover:text-brightBlue transition-colors">Help Center</button></li>
+                    <li><button onClick={() => navigate(AppRoute.TUTORIALS)} className="hover:text-brightBlue transition-colors">Tutorials</button></li>
+                    <li><button onClick={() => navigate(AppRoute.FAQ)} className="hover:text-brightBlue transition-colors">FAQ</button></li>
+                    <li><button onClick={() => navigate(AppRoute.BLOG)} className="hover:text-brightBlue transition-colors">Blog</button></li>
+                    <li><button onClick={() => navigate('newsletter' as any)} className="hover:text-brightBlue transition-colors">Newsletter Signup</button></li>
                 </ul>
             </div>
         </div>
@@ -513,6 +663,75 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
             <p>&copy; {new Date().getFullYear()} Complimaxx. All rights reserved.</p>
         </div>
       </footer>
+
+      {/* AUTH MODAL */}
+      {showAuthModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+              <div className="bg-[#080C14] border border-deepDivider rounded-2xl w-full max-w-md shadow-2xl animate-fadeIn relative">
+                  <button onClick={() => setShowAuthModal(false)} className="absolute top-4 right-4 text-steelGrey hover:text-white"><X size={24}/></button>
+                  <div className="p-8">
+                      <div className="text-center mb-6">
+                           <div className="w-12 h-12 rounded bg-gradient-to-br from-brightBlue to-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brightBlue/20 mx-auto mb-4">C</div>
+                           <h3 className="text-2xl font-bold text-white">{isSignUp ? 'Start your journey' : 'Welcome back'}</h3>
+                           <p className="text-steelGrey text-sm mt-2">{isSignUp ? 'Create a free account to get started.' : 'Enter your details to access your workspace.'}</p>
+                      </div>
+
+                      {authError && (
+                          <div className="mb-4 p-3 bg-riskHigh/10 border border-riskHigh/30 rounded text-riskHigh text-sm flex items-center">
+                              <Shield size={16} className="mr-2 flex-shrink-0" />
+                              {authError}
+                          </div>
+                      )}
+
+                      <form onSubmit={handleAuthSubmit} className="space-y-4">
+                          <div>
+                              <label className="block text-xs font-bold text-steelGrey mb-1">Email Address</label>
+                              <input 
+                                type="email" 
+                                required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="w-full bg-obsidianNavy border border-deepDivider rounded-lg p-3 text-white focus:border-brightBlue outline-none" 
+                                placeholder="name@company.com"
+                              />
+                          </div>
+                          <div>
+                              <label className="block text-xs font-bold text-steelGrey mb-1">Password</label>
+                              <input 
+                                type="password" 
+                                required
+                                minLength={6}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full bg-obsidianNavy border border-deepDivider rounded-lg p-3 text-white focus:border-brightBlue outline-none" 
+                                placeholder="••••••••"
+                              />
+                          </div>
+                          <button 
+                            type="submit" 
+                            disabled={authLoading}
+                            className="w-full bg-brightBlue hover:bg-blue-600 text-white font-bold py-3 rounded-lg shadow-lg transition-colors flex items-center justify-center disabled:opacity-50"
+                          >
+                              {authLoading ? <Loader2 size={18} className="animate-spin" /> : (isSignUp ? 'Create Account' : 'Sign In')}
+                          </button>
+                      </form>
+
+                      <div className="mt-6 text-center text-sm text-steelGrey">
+                          {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
+                          <button 
+                            onClick={() => {
+                                setIsSignUp(!isSignUp);
+                                setAuthError('');
+                            }} 
+                            className="text-brightBlue hover:underline font-bold"
+                          >
+                              {isSignUp ? 'Log in' : 'Sign up'}
+                          </button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      )}
     </div>
   );
 };
