@@ -10,9 +10,13 @@ import {
   Settings,
   LogOut,
   Menu,
-  X
+  X,
+  Cloud,
+  CloudOff,
+  Database
 } from 'lucide-react';
 import { AppRoute } from '../types';
+import { isSupabaseConfigured } from '../services/supabaseClient';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -84,7 +88,20 @@ const Layout: React.FC<LayoutProps> = ({ children, currentRoute, navigate, isLog
             <NavItem route={AppRoute.TEAM} icon={Users} label="Team" />
           </nav>
 
-          <div className="p-4 border-t border-deepDivider">
+          <div className="p-4 border-t border-deepDivider space-y-2">
+            {/* Connection Status Badge */}
+            <div className={`flex items-center px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border ${
+              isSupabaseConfigured 
+                ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' 
+                : 'bg-riskHigh/10 text-riskHigh border-riskHigh/20'
+            }`}>
+              {isSupabaseConfigured ? (
+                <><Cloud size={14} className="mr-2"/> Cloud Gekoppeld</>
+              ) : (
+                <><CloudOff size={14} className="mr-2"/> Offline Modus</>
+              )}
+            </div>
+
             <button 
               onClick={() => navigate(AppRoute.SETTINGS)}
               className={`flex items-center w-full px-4 py-2 text-sm transition-colors ${currentRoute === AppRoute.SETTINGS ? 'text-white' : 'text-steelGrey hover:text-white'}`}

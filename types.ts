@@ -60,7 +60,7 @@ export interface KeyControl {
   control_id: string;
   reason: string;
   test_frequency: string;
-  type?: string; // Optional type for filtering
+  type?: string; 
 }
 
 export interface TestPlan {
@@ -108,23 +108,18 @@ export interface ChecklistFile {
 
 export interface ChecklistItem {
   id: string;
-  requirement: string; // The Task Title
-  description?: string; // Detailed description
+  requirement: string; 
+  description?: string; 
   status: 'Not Started' | 'In Progress' | 'Review' | 'Complete';
   assignedTo: string;
   dueDate: string;
   framework: string;
-  
-  // New Fields
   category: 'Audit Prep' | 'Control' | 'Evidence' | 'Gap Remediation' | 'Renewal';
   priority: 'High' | 'Medium' | 'Low';
+  difficulty: 'Easy' | 'Medium' | 'Hard';
   recurrence: 'One-time' | 'Monthly' | 'Quarterly' | 'Yearly';
-  
-  // Evidence Handling
   evidenceNotes?: string;
   evidenceFiles?: ChecklistFile[];
-
-  // Meta
   linkedControl?: string;
   linkedRisk?: string;
 }
@@ -141,14 +136,14 @@ export interface Gap {
 }
 
 export interface AuditMeta {
-    last_audit_date: string; // ISO Date string YYYY-MM-DD
-    next_audit_date: string; // ISO Date string YYYY-MM-DD
+    last_audit_date: string; 
+    next_audit_date: string; 
     frequency: 'Annual' | 'Semi-Annual' | 'Quarterly';
 }
 
 export interface AuditPackage {
-  id?: string; // Database ID
-  user_id?: string; // Owner ID
+  id?: string; 
+  user_id?: string; 
   project_title?: string;
   process_flow: ProcessFlowStep[];
   raci_matrix: RaciMatrixItem[];
@@ -161,13 +156,14 @@ export interface AuditPackage {
   audit_score: AuditScore;
   framework_mapping: FrameworkMapItem[];
   savedAt?: string;
-  checklist?: ChecklistItem[]; // Persisted checklist state
-  gaps?: Gap[]; // Persisted gap tracking state
-  audit_meta?: AuditMeta; // Track renewal dates
+  checklist?: ChecklistItem[]; 
+  gaps?: Gap[]; 
+  audit_meta?: AuditMeta; 
 }
 
 export enum AppRoute {
   LANDING = 'landing',
+  LOGIN = 'login',
   DASHBOARD = 'dashboard',
   PROJECT_WIZARD = 'project_wizard',
   OUTPUT_VIEWER = 'output_viewer',
@@ -176,24 +172,20 @@ export enum AppRoute {
   RENEWAL = 'renewal',
   TEAM = 'team',
   SETTINGS = 'settings',
-  
-  // Public Content Pages
-  PRODUCT = 'product', // NEW ROUTE
   FEATURES = 'features',
-  PRICING = 'pricing',
-  GET_STARTED = 'get_started',
+  TUTORIALS = 'tutorials',
   ABOUT = 'about',
+  PRICING = 'pricing',
   CONTACT = 'contact',
-  LEGAL = 'legal',
+  SECURITY = 'security',
   PRIVACY = 'privacy',
   TERMS = 'terms',
+  // Added missing routes to fix "Property X does not exist" errors
+  PRODUCT = 'product',
+  FAQ = 'faq',
   COOKIES = 'cookies',
   DPA = 'dpa',
-  SECURITY = 'security',
-  HELP = 'help',
-  TUTORIALS = 'tutorials',
-  FAQ = 'faq',
-  BLOG = 'blog'
+  GET_STARTED = 'get_started'
 }
 
 export interface TeamMember {

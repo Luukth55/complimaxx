@@ -1,118 +1,118 @@
 
 import React from 'react';
-import { Plus, Shield, CheckCircle, AlertTriangle, FileText } from 'lucide-react';
+import { Plus, Shield, CheckCircle, AlertTriangle, FileText, Cloud, CloudOff, RefreshCcw, ArrowRight, Zap, Clock } from 'lucide-react';
 import { AppRoute } from '../types';
+import { isSupabaseConfigured } from '../services/supabaseClient';
 
 interface DashboardProps {
   navigate: (route: AppRoute) => void;
 }
 
 const StatCard = ({ label, value, icon: Icon, color, trend }: any) => (
-  <div className="bg-obsidianNavy border border-deepDivider rounded-xl p-6 shadow-lg">
+  <div className="bg-obsidianNavy border border-deepDivider rounded-xl p-6 shadow-lg hover:border-brightBlue/30 transition-all group">
     <div className="flex justify-between items-start">
       <div>
-        <p className="text-steelGrey text-sm font-medium mb-1">{label}</p>
-        <h3 className="text-3xl font-semibold text-white">{value}</h3>
+        <p className="text-steelGrey text-[10px] font-black uppercase tracking-[0.2em] mb-2">{label}</p>
+        <h3 className="text-3xl font-black text-white">{value}</h3>
       </div>
-      <div className={`p-3 rounded-lg bg-opacity-10 ${color}`}>
+      <div className={`p-3 rounded-lg bg-opacity-10 group-hover:scale-110 transition-transform ${color}`}>
         <Icon size={24} className={color.replace('bg-', 'text-')} />
       </div>
     </div>
     <div className="mt-4 flex items-center text-xs text-steelGrey">
-      <span className="text-green-400 font-medium mr-1">{trend}</span> since last month
-    </div>
-  </div>
-);
-
-const ProjectCard = ({ title, status, frameworks, date }: any) => (
-  <div className="bg-obsidianNavy border border-deepDivider rounded-xl p-5 hover:border-brightBlue transition-colors cursor-pointer group">
-    <div className="flex justify-between items-start mb-3">
-      <div className="p-2 rounded bg-brightBlue/10 text-brightBlue group-hover:bg-brightBlue group-hover:text-white transition-colors">
-        <FileText size={20} />
-      </div>
-      <span className={`px-2 py-1 rounded text-xs font-medium ${
-        status === 'Completed' ? 'bg-riskLow/20 text-riskLow' : 'bg-yellow-500/20 text-yellow-500'
-      }`}>
-        {status}
-      </span>
-    </div>
-    <h4 className="text-white font-medium mb-1">{title}</h4>
-    <p className="text-steelGrey text-sm mb-4">Frameworks: {frameworks.join(', ')}</p>
-    <div className="flex items-center justify-between text-xs text-slate-500 border-t border-deepDivider pt-3">
-      <span>Updated {date}</span>
-      <span>Owner: You</span>
+      <span className="text-emerald-500 font-bold mr-1">{trend}</span> since last month
     </div>
   </div>
 );
 
 const Dashboard: React.FC<DashboardProps> = ({ navigate }) => {
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-fadeIn">
       {/* Welcome Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Welcome back, Auditor</h1>
-          <p className="text-steelGrey">Here is your compliance overview for this quarter.</p>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-[#080C14] border border-deepDivider p-8 rounded-2xl shadow-xl relative overflow-hidden">
+        <div className="absolute right-0 top-0 h-full w-1/4 bg-brightBlue/5 skew-x-12 transform origin-bottom-right"></div>
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-2">
+             <h1 className="text-3xl font-black text-white tracking-tight">Welcome, Compliance Hero</h1>
+             {isSupabaseConfigured ? (
+               <div className="flex items-center text-[10px] font-black text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 tracking-widest uppercase">
+                 <Cloud size={10} className="mr-1" /> LIVE SYNC
+               </div>
+             ) : (
+               <div className="flex items-center text-[10px] font-black text-riskHigh bg-riskHigh/10 px-2 py-0.5 rounded border border-riskHigh/20 tracking-widest uppercase">
+                 <CloudOff size={10} className="mr-1" /> LOCAL MODE
+               </div>
+             )}
+          </div>
+          <p className="text-steelGrey text-sm font-medium">Your audit environment is <span className="text-emerald-500 font-bold">Stable</span>. 12 tasks pending for ISO 27001.</p>
         </div>
         <button 
           onClick={() => navigate(AppRoute.PROJECT_WIZARD)}
-          className="bg-brightBlue hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium shadow-[0_0_15px_rgba(0,140,255,0.3)] transition-all flex items-center"
+          className="bg-brightBlue hover:bg-blue-600 text-white px-8 py-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-xl shadow-brightBlue/20 transition-all hover:scale-105 active:scale-95 flex items-center relative z-10"
         >
           <Plus size={20} className="mr-2" />
-          Create New Project
+          Start New Audit
         </button>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard label="Audit Readiness" value="78%" icon={Shield} color="bg-brightBlue text-brightBlue" trend="+4%" />
-        <StatCard label="Open Gaps" value="12" icon={AlertTriangle} color="bg-riskHigh text-riskHigh" trend="-2" />
-        <StatCard label="Active Projects" value="3" icon={FileText} color="bg-purple-500 text-purple-500" trend="+1" />
-        <StatCard label="Controls Tested" value="145" icon={CheckCircle} color="bg-riskLow text-riskLow" trend="+12" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* STATS */}
+          <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <StatCard label="Audit Readiness" value="84%" icon={Shield} color="bg-brightBlue" trend="+4%" />
+              <StatCard label="Active Gaps" value="8" icon={AlertTriangle} color="bg-riskHigh" trend="-3" />
+              <StatCard label="Evidence Health" value="92%" icon={CheckCircle} color="bg-emerald-500" trend="+12%" />
+              <StatCard label="Pending Tasks" value="14" icon={FileText} color="bg-purple-500" trend="-2" />
+          </div>
+
+          {/* CRITICAL PATH WIDGET */}
+          <div className="bg-gradient-to-br from-obsidianNavy to-[#121826] border border-brightBlue/30 rounded-2xl p-6 shadow-2xl relative group">
+              <div className="absolute top-0 left-0 w-1 h-full bg-brightBlue"></div>
+              <h3 className="text-xs font-black text-brightBlue uppercase tracking-widest mb-6 flex items-center">
+                  <Zap size={14} className="mr-2 fill-current" /> Critical Path Next Step
+              </h3>
+              <div className="space-y-4">
+                  <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                      <div className="flex items-center gap-2 mb-2 text-[10px] font-black text-steelGrey uppercase tracking-widest">
+                          <Clock size={12} /> Due in 2 days
+                      </div>
+                      <h4 className="text-white font-bold text-lg mb-2">Review Access Logs for SOC 2</h4>
+                      <p className="text-xs text-steelGrey leading-relaxed mb-4 line-clamp-2">Validate that all admin access logs from the last quarter have been reviewed and signed off by the CISO.</p>
+                      <button onClick={() => navigate(AppRoute.CHECKLIST)} className="w-full bg-white text-techBlack py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all hover:bg-brightBlue hover:text-white">Open Task</button>
+                  </div>
+                  <div className="text-[10px] text-steelGrey font-bold text-center italic opacity-40">Generated by Compliance AI engine</div>
+              </div>
+          </div>
       </div>
 
-      {/* Recent Activity / Projects */}
+      {/* RECENT PROJECTS SIMULATED */}
       <div>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-white">Recent Projects</h2>
-          <button onClick={() => navigate(AppRoute.OUTPUT_VIEWER)} className="text-brightBlue text-sm hover:underline">View All</button>
+          <h2 className="text-xl font-black text-white uppercase tracking-widest opacity-40">Recent Workspace Activity</h2>
+          <button onClick={() => navigate(AppRoute.OUTPUT_VIEWER)} className="text-brightBlue text-xs font-black uppercase tracking-widest hover:underline">View All Projects</button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <ProjectCard 
-            title="HR Onboarding Process" 
-            status="Completed" 
-            frameworks={['ISO 27001', 'SOC 2']} 
-            date="2 days ago" 
-          />
-          <ProjectCard 
-            title="Vendor Risk Management" 
-            status="In Progress" 
-            frameworks={['NIS2']} 
-            date="5 hours ago" 
-          />
-          <ProjectCard 
-            title="Cloud Access Control" 
-            status="In Progress" 
-            frameworks={['ISO 27001']} 
-            date="Just now" 
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[
+                { title: 'ISO 27001 ISMS Setup', status: 'In Progress', frameworks: ['ISO 27001', 'SOC 2'], score: 65 },
+                { title: 'NIS2 Directive Mapping', status: 'Completed', frameworks: ['NIS2', 'ISO 27001'], score: 98 }
+            ].map((p, i) => (
+                <div key={i} className="bg-obsidianNavy border border-deepDivider rounded-2xl p-6 hover:border-brightBlue transition-all cursor-pointer group">
+                    <div className="flex justify-between mb-4">
+                        <div className="p-2 bg-brightBlue/10 text-brightBlue rounded-lg group-hover:bg-brightBlue group-hover:text-white transition-colors">
+                            <FileText size={20} />
+                        </div>
+                        <div className="text-right">
+                            <div className="text-[10px] text-steelGrey font-black uppercase tracking-widest mb-1">Readiness Score</div>
+                            <div className={`text-xl font-black ${p.score > 80 ? 'text-emerald-500' : 'text-brightBlue'}`}>{p.score}%</div>
+                        </div>
+                    </div>
+                    <h4 className="text-lg font-bold text-white mb-1">{p.title}</h4>
+                    <p className="text-xs text-steelGrey mb-4">{p.frameworks.join(' • ')}</p>
+                    <div className="w-full bg-deepDivider h-1.5 rounded-full overflow-hidden">
+                        <div className={`h-full ${p.score > 80 ? 'bg-emerald-500' : 'bg-brightBlue'}`} style={{ width: `${p.score}%` }}></div>
+                    </div>
+                </div>
+            ))}
         </div>
-      </div>
-      
-      {/* Plan Usage */}
-      <div className="bg-gradient-to-r from-obsidianNavy to-[#0a1120] border border-deepDivider rounded-xl p-6 relative overflow-hidden">
-        <div className="relative z-10">
-          <h3 className="text-lg font-bold text-white mb-2">Pro Plan Usage</h3>
-          <div className="w-full bg-deepDivider rounded-full h-2.5 mb-1 max-w-md">
-            <div className="bg-brightBlue h-2.5 rounded-full" style={{ width: '45%' }}></div>
-          </div>
-          <div className="flex justify-between max-w-md text-xs text-steelGrey mb-4">
-             <span>27 / 60 Processes generated</span>
-             <span>Reset in 12 days</span>
-          </div>
-          <button className="text-brightBlue text-sm font-medium hover:text-white transition-colors">Manage Subscription &rarr;</button>
-        </div>
-        <div className="absolute right-0 top-0 h-full w-1/3 bg-brightBlue/5 skew-x-12 transform origin-bottom-right"></div>
       </div>
     </div>
   );
