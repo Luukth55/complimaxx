@@ -4,20 +4,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Complimaxx - The Complete AI Platform for Audit, Risk & Compliance</title>
+    <title>Complimaxx - The AI Operating System for GRC</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         theme: {
           extend: {
             colors: {
-              techBlack: '#05070B',
-              obsidianNavy: '#0D1524',
+              techBlack: '#05070A',
+              obsidianNavy: '#0D1117',
               brightBlue: '#008CFF',
-              softBlue: '#4DBAFF',
-              deepDivider: '#1A2333',
-              steelGrey: '#A6B3C9',
-              fogGrey: '#E5EAF1',
+              deepDivider: '#1A1F26',
+              steelGrey: '#8B949E',
+              fogGrey: '#C9D1D9',
               riskHigh: '#FF4D4F',
               riskMedium: '#FA8C16',
               riskLow: '#52C41A',
@@ -26,23 +25,34 @@
               sans: ['Inter', 'sans-serif'],
             },
             animation: {
-              'bounce-slow': 'bounce 3s infinite',
-              'fadeIn': 'fadeIn 0.8s ease-out forwards',
-              'slideInRight': 'slideInRight 1s ease-out forwards',
+              'pulse-glow': 'pulseGlow 3s infinite',
+              'fadeIn': 'fadeIn 1.2s ease-out forwards',
+              'slideUp': 'slideUp 0.8s ease-out forwards',
+              'slideInRight': 'slideInRight 1s cubic-bezier(0.16, 1, 0.3, 1) forwards',
               'float': 'float 6s ease-in-out infinite',
+              'scan-line': 'scanLine 4s linear infinite',
+              'spin-slow': 'spin 15s linear infinite',
             },
             keyframes: {
               float: {
                 '0%, 100%': { transform: 'translateY(0px)' },
                 '50%': { transform: 'translateY(-20px)' },
               },
+              pulseGlow: {
+                '0%, 100%': { opacity: '0.4', filter: 'blur(10px)' },
+                '50%': { opacity: '0.7', filter: 'blur(20px)' },
+              },
               fadeIn: {
-                '0%': { opacity: '0', transform: 'translateY(10px)' },
+                '0%': { opacity: '0', transform: 'translateY(20px)' },
                 '100%': { opacity: '1', transform: 'translateY(0)' },
               },
               slideInRight: {
-                '0%': { opacity: '0', transform: 'translateX(40px) perspective(1000px) rotateY(-20deg)' },
-                '100%': { opacity: '1', transform: 'translateX(0) perspective(1000px) rotateY(-20deg)' },
+                '0%': { opacity: '0', transform: 'translateX(50px) perspective(1200px) rotateY(-15deg)' },
+                '100%': { opacity: '1', transform: 'translateX(0) perspective(1200px) rotateY(-8deg)' },
+              },
+              scanLine: {
+                '0%': { transform: 'translateY(-100%)' },
+                '100%': { transform: 'translateY(400%)' }
               }
             }
           },
@@ -53,29 +63,44 @@
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
       body {
         font-family: 'Inter', sans-serif;
-        background-color: #FFFFFF;
-        color: #05070B;
+        background-color: #05070A;
+        color: #C9D1D9;
+        margin: 0;
+        overflow-x: hidden;
       }
-      .perspective-1000 {
-        perspective: 1000px;
+      .perspective-1200 {
+        perspective: 1200px;
       }
-      .rotate-y-[-20deg] {
-        transform: rotateY(-20deg);
+      .bg-tech-grid {
+        background-size: 50px 50px;
+        background-image: 
+          linear-gradient(to right, rgba(0, 140, 255, 0.05) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(0, 140, 255, 0.05) 1px, transparent 1px);
+        mask-image: radial-gradient(circle at center, black, transparent 80%);
       }
-      /* Custom Scrollbar */
+      .glow-orb {
+        background: radial-gradient(circle at center, rgba(0, 140, 255, 0.15) 0%, transparent 70%);
+      }
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
       ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #F9FAFB; 
+        width: 6px;
       }
       ::-webkit-scrollbar-thumb {
-        background: #E5E7EB; 
-        border-radius: 4px;
+        background: #1A1F26;
+        border-radius: 10px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #008CFF; 
+        background: #008CFF;
+      }
+      .card-3d {
+        transition: transform 0.4s ease-out;
+      }
+      .card-3d:hover {
+        transform: translateY(-10px) rotateX(2deg) rotateY(2deg);
       }
     </style>
   <script type="importmap">

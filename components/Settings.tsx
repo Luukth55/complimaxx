@@ -58,7 +58,7 @@ const Settings: React.FC = () => {
 
   const handleSave = async () => {
     if (!isSupabaseConfigured) {
-        setError("Supabase is niet geconfigureerd. Wijzigingen kunnen niet worden opgeslagen in de cloud.");
+        setError("Supabase is not configured. Changes cannot be saved to the cloud.");
         return;
     }
     setSaving(true);
@@ -109,7 +109,7 @@ const Settings: React.FC = () => {
       <div className="flex justify-between items-end">
         <div>
           <h2 className="text-2xl font-bold text-white">Account Settings</h2>
-          <p className="text-steelGrey text-sm">Beheer je profiel en organisatiegegevens.</p>
+          <p className="text-steelGrey text-sm">Manage your profile and organization details.</p>
         </div>
         <div className={`px-3 py-1 rounded-full text-[10px] font-bold border flex items-center ${isSupabaseConfigured ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-riskHigh/10 text-riskHigh border-riskHigh/20'}`}>
            {isSupabaseConfigured ? <Cloud size={12} className="mr-1.5"/> : <CloudOff size={12} className="mr-1.5"/>}
@@ -173,17 +173,17 @@ const Settings: React.FC = () => {
                         <StatusRow 
                             label="Supabase URL" 
                             status={connectionStatus.urlPresent} 
-                            detail={connectionStatus.urlPresent ? "Variabele SUPABASE_URL is ingesteld." : "Omgevingsvariabele SUPABASE_URL ontbreekt."}
+                            detail={connectionStatus.urlPresent ? "Variable SUPABASE_URL is set." : "Environment variable SUPABASE_URL is missing."}
                         />
                         <StatusRow 
                             label="Supabase Anonymous Key" 
                             status={connectionStatus.keyPresent} 
-                            detail={connectionStatus.keyPresent ? "Variabele SUPABASE_ANON_KEY is ingesteld." : "Omgevingsvariabele SUPABASE_ANON_KEY ontbreekt."}
+                            detail={connectionStatus.keyPresent ? "Variable SUPABASE_ANON_KEY is set." : "Environment variable SUPABASE_ANON_KEY is missing."}
                         />
                         <StatusRow 
                             label="AI Engine (Gemini 3)" 
                             status={!!process.env.API_KEY} 
-                            detail={process.env.API_KEY ? "Google GenAI API Key is geconfigureerd." : "API_KEY variabele ontbreekt."}
+                            detail={process.env.API_KEY ? "Google GenAI API Key is configured." : "API_KEY variable is missing."}
                         />
                     </div>
 
@@ -191,8 +191,8 @@ const Settings: React.FC = () => {
                         <h5 className="text-white font-bold text-sm mb-4 flex items-center"><ShieldCheck size={16} className="mr-2 text-brightBlue"/> Operational Mode</h5>
                         <p className="text-sm text-steelGrey leading-relaxed">
                             {isSupabaseConfigured 
-                                ? "Complimaxx draait momenteel in Cloud-Sync modus. Al je projecten, checklists en gaps worden veilig opgeslagen in de Supabase database en zijn overal toegankelijk."
-                                : "Complimaxx draait momenteel in Offline/Demo modus. Gegevens worden alleen tijdelijk in het geheugen van je browser opgeslagen. Om gegevens permanent op te slaan, moet je Supabase koppelen via omgevingsvariabelen."
+                                ? "Complimaxx is currently running in Cloud-Sync mode. All your projects, checklists, and gaps are securely stored in the Supabase database and are accessible everywhere."
+                                : "Complimaxx is currently running in Offline/Demo mode. Data is only stored temporarily in your browser's memory. To store data permanently, you must link Supabase via environment variables."
                             }
                         </p>
                     </div>

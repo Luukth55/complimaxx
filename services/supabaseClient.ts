@@ -1,51 +1,17 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Geconfigureerd met de door de gebruiker verstrekte gegevens
-const supabaseUrl = 'https://oawunlaetnhsgxhvytuz.supabase.co';
-const supabaseAnonKey = 'keysb_publishable_r8PpBQMJUFEd95EDv44y9Q_qQwXhvYR';
+// Gebruik van de verstrekte credentials
+const supabaseUrl = 'https://qvjzuchlapionsqebhvj.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2anp1Y2hsYXBpb25zcWViaHZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczNTQ2MjgsImV4cCI6MjA4MjkzMDYyOH0.gKazolYLog4KQ-iGylM61vHno-if7z8YlDSEA2zqv4o';
 
 export const connectionStatus = {
-  urlPresent: true,
-  keyPresent: true,
+  urlPresent: !!supabaseUrl,
+  keyPresent: !!supabaseAnonKey,
   isMock: false
 };
 
-let client: any;
+// Initialiseer de echte client
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-try {
-  // Initialiseer de echte client met de verstrekte sleutels
-  client = createClient(supabaseUrl, supabaseAnonKey);
-  console.log("✅ Supabase Client succesvol gekoppeld aan: " + supabaseUrl);
-} catch (e) {
-  console.error("❌ Fout bij initialiseren Supabase:", e);
-  connectionStatus.isMock = true;
-}
-
-// Fallback mock (alleen als de initialisatie hierboven onverhoopt faalt)
-if (!client || connectionStatus.isMock) {
-  client = {
-    auth: {
-      getSession: async () => ({ data: { session: null }, error: null }),
-      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-      signInWithPassword: async () => ({ error: { message: "Supabase initialisatie fout." } }),
-      signUp: async () => ({ error: { message: "Supabase initialisatie fout." } }),
-      signOut: async () => {},
-      getUser: async () => ({ data: { user: null }, error: null }),
-    },
-    from: (table: string) => ({
-      select: () => ({ 
-        eq: () => ({ 
-          order: () => ({ data: null, error: { code: 'PGRST204', message: 'Database verbinding mislukt' } }) 
-        }),
-        single: () => ({ data: null, error: { message: 'Geen verbinding' } })
-      }),
-      insert: () => ({ select: () => ({ data: null, error: new Error("Opslaan mislukt") }) }),
-      update: () => ({ eq: () => ({ select: () => ({ data: null, error: new Error("Update mislukt") }) }) }),
-      upsert: () => ({ error: { message: "Upsert mislukt" } }),
-    })
-  };
-}
-
-export const supabase = client;
-export const isSupabaseConfigured = !connectionStatus.isMock;
+export const isSupabaseConfigured = true;

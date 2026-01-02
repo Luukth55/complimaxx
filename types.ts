@@ -180,12 +180,13 @@ export enum AppRoute {
   SECURITY = 'security',
   PRIVACY = 'privacy',
   TERMS = 'terms',
-  // Added missing routes to fix "Property X does not exist" errors
   PRODUCT = 'product',
   FAQ = 'faq',
   COOKIES = 'cookies',
   DPA = 'dpa',
-  GET_STARTED = 'get_started'
+  GET_STARTED = 'get_started',
+  // Fix: Added missing HELP route
+  HELP = 'help'
 }
 
 export interface TeamMember {

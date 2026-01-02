@@ -1,22 +1,21 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
-  ArrowLeft, Shield, Lock, FileText, CheckCircle, Mail, MapPin, 
+  Shield, Lock, FileText, CheckCircle, Mail, Briefcase, 
   Linkedin, Globe, Server, Users, BookOpen, PlayCircle, Search, 
-  ChevronRight, ArrowRight, Zap, RefreshCw, Layout, Database,
-  CreditCard, Star, Video, Play, HelpCircle, Check,
-  GitCommit, AlertOctagon, ClipboardCheck, Sliders, Link, Target,
-  Phone, Calendar, PieChart, ShieldAlert, Key, Grid, FileCheck,
-  Workflow, Layers, Activity, TrendingDown, Clock
+  ArrowRight, Zap, RefreshCw, Database,
+  CreditCard, Star, Play, HelpCircle, Check,
+  GitCommit, AlertOctagon, ClipboardCheck, Sliders, Target,
+  Phone, PieChart, ShieldAlert, FileCheck,
+  Workflow, Layers, Clock, ChevronDown, Info, ShieldCheck, Cpu, History, Twitter
 } from 'lucide-react';
 import { AppRoute } from '../types';
 
-interface PageProps {
+interface NavProps {
   navigate: (route: AppRoute) => void;
-  route: AppRoute;
 }
 
-// --- SHARED LAYOUT ---
+// --- SHARED LAYOUT FOR PUBLIC PAGES ---
 const PublicPageLayout: React.FC<{
   title: string;
   subtitle?: string;
@@ -24,581 +23,362 @@ const PublicPageLayout: React.FC<{
   navigate: (route: AppRoute) => void;
 }> = ({ title, subtitle, children, navigate }) => {
   return (
-    <div className="min-h-screen bg-techBlack text-white font-sans">
-      {/* Simple Header */}
-      <nav className="border-b border-deepDivider bg-techBlack/80 backdrop-blur-md sticky top-0 z-50">
+    <div className="min-h-screen bg-techBlack text-white font-sans selection:bg-brightBlue/30">
+      {/* Navbar exactly as requested: Logo left, Links middle, Login right */}
+      <nav className="border-b border-deepDivider bg-techBlack/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center space-x-2 text-brightBlue cursor-pointer" onClick={() => navigate(AppRoute.LANDING)}>
-            <div className="w-8 h-8 rounded bg-gradient-to-br from-brightBlue to-blue-600 flex items-center justify-center text-white font-bold text-lg">C</div>
-            <span className="text-xl font-bold tracking-tight text-white">Complimaxx</span>
+          <div className="flex items-center space-x-3 text-brightBlue cursor-pointer" onClick={() => navigate(AppRoute.LANDING)}>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brightBlue to-blue-600 flex items-center justify-center text-white font-black text-xl shadow-lg">C</div>
+            <span className="text-2xl font-black tracking-tighter text-white">Complimaxx</span>
           </div>
-          <button onClick={() => navigate(AppRoute.LANDING)} className="text-sm text-steelGrey hover:text-white flex items-center">
-            <ArrowLeft size={16} className="mr-2" /> Back to Home
+          <div className="hidden md:flex items-center space-x-12 text-[11px] font-black text-steelGrey uppercase tracking-[0.3em]">
+            <button onClick={() => navigate(AppRoute.FEATURES)} className="hover:text-white transition-colors">Features</button>
+            <button onClick={() => navigate(AppRoute.PRICING)} className="hover:text-white transition-colors">Pricing</button>
+            <button onClick={() => navigate(AppRoute.ABOUT)} className="hover:text-white transition-colors">About Us</button>
+          </div>
+          <button onClick={() => navigate(AppRoute.LOGIN)} className="bg-white/5 hover:bg-brightBlue border border-white/10 hover:border-brightBlue text-white px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95">
+            Login
           </button>
         </div>
       </nav>
 
-      <main className="pb-20">
-        {/* Hero */}
-        <div className="pt-16 pb-12 px-6 text-center border-b border-deepDivider bg-[#080C14]">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-steelGrey">{title}</h1>
-          {subtitle && <p className="text-xl text-steelGrey max-w-2xl mx-auto">{subtitle}</p>}
+      <main className="pb-32">
+        <div className="pt-24 pb-20 px-6 text-center border-b border-deepDivider bg-[#080C14] relative overflow-hidden">
+          <div className="absolute inset-0 bg-tech-grid opacity-10"></div>
+          <div className="relative z-10">
+            <h1 className="text-5xl md:text-7xl font-black mb-6 tracking-tighter text-white animate-fadeIn">{title}</h1>
+            {subtitle && <p className="text-xl text-steelGrey max-w-3xl mx-auto font-medium leading-relaxed">{subtitle}</p>}
+          </div>
         </div>
 
-        {/* Content */}
-        <div className="max-w-7xl mx-auto px-6 pt-12">
+        <div className="max-w-7xl mx-auto px-6 pt-24">
             {children}
         </div>
       </main>
 
-      {/* Simple Footer */}
-      <footer className="border-t border-deepDivider py-12 text-center text-steelGrey text-sm bg-[#05070B]">
-        <div className="flex justify-center space-x-6 mb-4">
-            <button onClick={() => navigate(AppRoute.TERMS)} className="hover:text-white">Terms</button>
-            <button onClick={() => navigate(AppRoute.PRIVACY)} className="hover:text-white">Privacy</button>
-            <button onClick={() => navigate(AppRoute.CONTACT)} className="hover:text-white">Contact</button>
+      <footer className="border-t border-deepDivider py-24 bg-[#030406]">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-12 items-start w-full text-left">
+            <div className="flex flex-col">
+              <h4 className="font-black text-white mb-8 uppercase text-[9px] tracking-[0.4em]">Product</h4>
+              <ul className="space-y-4 text-[9px] font-black text-steelGrey uppercase tracking-[0.3em]">
+                <li><button onClick={() => navigate(AppRoute.FEATURES)} className="hover:text-brightBlue transition-colors text-left">Features</button></li>
+                <li><button onClick={() => navigate(AppRoute.PRICING)} className="hover:text-brightBlue transition-colors text-left">Pricing</button></li>
+                <li><button onClick={() => navigate(AppRoute.GET_STARTED)} className="hover:text-brightBlue transition-colors text-left">Get Started</button></li>
+              </ul>
+            </div>
+
+            <div className="flex flex-col">
+              <h4 className="font-black text-white mb-8 uppercase text-[9px] tracking-[0.4em]">Company</h4>
+              <ul className="space-y-4 text-[9px] font-black text-steelGrey uppercase tracking-[0.3em]">
+                <li><button onClick={() => navigate(AppRoute.ABOUT)} className="hover:text-brightBlue transition-colors text-left">About Us</button></li>
+                <li><button onClick={() => navigate(AppRoute.CONTACT)} className="hover:text-brightBlue transition-colors text-left">Contact</button></li>
+                <li><button onClick={() => navigate(AppRoute.SECURITY)} className="hover:text-brightBlue transition-colors text-left">Security</button></li>
+              </ul>
+            </div>
+
+            <div className="flex flex-col">
+              <h4 className="font-black text-white mb-8 uppercase text-[9px] tracking-[0.4em]">Legal</h4>
+              <ul className="space-y-4 text-[9px] font-black text-steelGrey uppercase tracking-[0.3em]">
+                <li><button onClick={() => navigate(AppRoute.PRIVACY)} className="hover:text-brightBlue transition-colors text-left">Privacy</button></li>
+                <li><button onClick={() => navigate(AppRoute.TERMS)} className="hover:text-brightBlue transition-colors text-left">Terms</button></li>
+                <li><button onClick={() => navigate(AppRoute.COOKIES)} className="hover:text-brightBlue transition-colors text-left">Cookies</button></li>
+              </ul>
+            </div>
+
+            <div className="flex flex-col">
+              <h4 className="font-black text-white mb-8 uppercase text-[9px] tracking-[0.4em]">Support</h4>
+              <ul className="space-y-4 text-[9px] font-black text-steelGrey uppercase tracking-[0.3em]">
+                <li><button onClick={() => navigate(AppRoute.HELP)} className="hover:text-brightBlue transition-colors text-left">Help Center</button></li>
+                <li><button onClick={() => navigate(AppRoute.TUTORIALS)} className="hover:text-brightBlue transition-colors text-left">Tutorials</button></li>
+                <li><button onClick={() => navigate(AppRoute.FAQ)} className="hover:text-brightBlue transition-colors text-left">FAQ</button></li>
+                <li className="flex items-center gap-2 pt-2"><Linkedin size={12} className="text-brightBlue" /> <button className="hover:text-white transition-colors text-left">LinkedIn</button></li>
+                <li className="flex items-center gap-2"><Twitter size={12} className="text-brightBlue" /> <button className="hover:text-white transition-colors text-left">Twitter</button></li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-white/5 mt-16 pt-8 text-center text-[8px] font-black uppercase tracking-[0.8em] text-steelGrey w-full opacity-30">
+            Copyright © Complimaxx — All rights reserved.
+          </div>
         </div>
-        <p>&copy; {new Date().getFullYear()} Complimaxx. All rights reserved.</p>
       </footer>
     </div>
   );
 };
 
-// --- FEATURES PAGE (REVAMPED) ---
-export const FeaturesPage: React.FC<PageProps> = ({ navigate }) => {
-  return (
-    <PublicPageLayout 
-        title="A Connected Operating System" 
-        subtitle="Complimaxx isn't just a document generator. It's a unified platform that manages the entire lifecycle of your compliance program."
-        navigate={navigate}
-    >
-        <div className="space-y-32">
-            
-            {/* 1. THE PLATFORM ECOSYSTEM VISUAL */}
-            <div className="relative">
-                <div className="text-center mb-12">
-                    <h2 className="text-3xl font-bold text-white mb-4">How it works together</h2>
-                    <p className="text-steelGrey max-w-2xl mx-auto">
-                        Data flows seamlessly between modules. Generating a package automatically populates your checklists, identifies gaps, and schedules renewals.
-                    </p>
-                </div>
-
-                {/* Ecosystem Diagram */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 relative">
-                    {/* Connecting Line (Desktop) */}
-                    <div className="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-gradient-to-r from-brightBlue/20 via-purple-500/20 to-emerald-500/20 -z-10 border-t border-dashed border-deepDivider"></div>
-
-                    {[
-                        { 
-                            title: "1. Generator", 
-                            icon: Zap, 
-                            desc: "Creates the Audit Package", 
-                            color: "text-brightBlue",
-                            bg: "bg-brightBlue/10 border-brightBlue/30"
-                        },
-                        { 
-                            title: "2. Checklists", 
-                            icon: ClipboardCheck, 
-                            desc: "Operationalizes Controls", 
-                            color: "text-purple-500",
-                            bg: "bg-purple-500/10 border-purple-500/30"
-                        },
-                        { 
-                            title: "3. Gap Tracking", 
-                            icon: AlertOctagon, 
-                            desc: "Fixes Weaknesses", 
-                            color: "text-orange-500",
-                            bg: "bg-orange-500/10 border-orange-500/30"
-                        },
-                        { 
-                            title: "4. Renewal Mode", 
-                            icon: RefreshCw, 
-                            desc: "Maintains Compliance", 
-                            color: "text-emerald-500",
-                            bg: "bg-emerald-500/10 border-emerald-500/30"
-                        }
-                    ].map((step, i) => (
-                        <div key={i} className={`bg-obsidianNavy p-6 rounded-xl border ${step.bg} relative z-10 flex flex-col items-center text-center h-full hover:-translate-y-2 transition-transform duration-300 shadow-xl`}>
-                            <div className={`mb-4 p-3 rounded-full bg-[#080C14] border border-deepDivider ${step.color}`}>
-                                <step.icon size={24} />
-                            </div>
-                            <h3 className="text-lg font-bold text-white mb-2">{step.title}</h3>
-                            <p className="text-sm text-steelGrey">{step.desc}</p>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* 2. DEEP DIVE: CHECKLISTS */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                <div className="order-2 lg:order-1">
-                    <div className="bg-[#080C14] border border-deepDivider rounded-2xl p-6 relative overflow-hidden shadow-2xl">
-                        {/* Fake UI */}
-                        <div className="flex justify-between items-center mb-6 border-b border-deepDivider pb-4">
-                            <div className="flex items-center space-x-2">
-                                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                            </div>
-                            <div className="text-xs text-steelGrey font-mono">checklist_view.tsx</div>
-                        </div>
-                        <div className="space-y-3">
-                            <div className="bg-obsidianNavy p-4 rounded-lg border border-deepDivider flex justify-between items-center">
-                                <div className="flex items-center">
-                                    <div className="w-5 h-5 rounded border border-brightBlue bg-brightBlue flex items-center justify-center mr-3"><Check size={12} className="text-white"/></div>
-                                    <span className="text-sm text-steelGrey line-through decoration-deepDivider">Review Access Logs (Q3)</span>
-                                </div>
-                                <span className="text-xs bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded">Done</span>
-                            </div>
-                            <div className="bg-obsidianNavy p-4 rounded-lg border border-brightBlue/50 shadow-[0_0_15px_rgba(0,140,255,0.1)]">
-                                <div className="flex justify-between items-start mb-2">
-                                    <div className="flex items-center">
-                                        <div className="w-5 h-5 rounded border border-steelGrey mr-3"></div>
-                                        <span className="text-sm text-white font-bold">Upload Pen Test Report</span>
-                                    </div>
-                                    <span className="text-xs bg-brightBlue/10 text-brightBlue px-2 py-1 rounded">In Progress</span>
-                                </div>
-                                <div className="ml-8 p-3 bg-black/30 rounded border border-dashed border-deepDivider text-xs text-steelGrey flex items-center justify-center">
-                                    <FileCheck size={14} className="mr-2"/> Drag & Drop Evidence Here
-                                </div>
-                            </div>
-                            <div className="bg-obsidianNavy p-4 rounded-lg border border-deepDivider opacity-50">
-                                <div className="flex items-center">
-                                    <div className="w-5 h-5 rounded border border-steelGrey mr-3"></div>
-                                    <span className="text-sm text-white">Approve Vendor Risk Policy</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="order-1 lg:order-2">
-                    <div className="inline-flex items-center px-3 py-1 rounded-full bg-purple-500/10 text-purple-400 text-xs font-bold uppercase tracking-wider mb-4 border border-purple-500/20">
-                        Operationalize
-                    </div>
-                    <h2 className="text-3xl font-bold text-white mb-4">Smart Checklists & Evidence</h2>
-                    <p className="text-lg text-steelGrey mb-6 leading-relaxed">
-                        Audits aren't just about writing documents; they're about proving you follow them.
-                    </p>
-                    <ul className="space-y-4">
-                        <li className="flex items-start">
-                            <CheckCircle size={20} className="text-purple-500 mr-3 mt-1 shrink-0" />
-                            <div>
-                                <h4 className="text-white font-bold">Auto-Populated Tasks</h4>
-                                <p className="text-sm text-steelGrey">The system automatically creates tasks based on the Controls generated in your audit package.</p>
-                            </div>
-                        </li>
-                        <li className="flex items-start">
-                            <CheckCircle size={20} className="text-purple-500 mr-3 mt-1 shrink-0" />
-                            <div>
-                                <h4 className="text-white font-bold">Evidence Linking</h4>
-                                <p className="text-sm text-steelGrey">Upload screenshots, PDFs, or logs directly to the specific control they verify. No more lost Google Drive links.</p>
-                            </div>
-                        </li>
-                        <li className="flex items-start">
-                            <CheckCircle size={20} className="text-purple-500 mr-3 mt-1 shrink-0" />
-                            <div>
-                                <h4 className="text-white font-bold">Frequency Management</h4>
-                                <p className="text-sm text-steelGrey">Set recurrence (Daily, Weekly, Quarterly) so you never miss a compliance deadline.</p>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            {/* 3. DEEP DIVE: GAP TRACKING */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                <div>
-                    <div className="inline-flex items-center px-3 py-1 rounded-full bg-orange-500/10 text-orange-400 text-xs font-bold uppercase tracking-wider mb-4 border border-orange-500/20">
-                        Remediate
-                    </div>
-                    <h2 className="text-3xl font-bold text-white mb-4">Intelligent Gap Tracking</h2>
-                    <p className="text-lg text-steelGrey mb-6 leading-relaxed">
-                        Complimaxx doesn't just tell you what you have; it tells you what you're missing.
-                    </p>
-                    <ul className="space-y-4">
-                        <li className="flex items-start">
-                            <AlertOctagon size={20} className="text-orange-500 mr-3 mt-1 shrink-0" />
-                            <div>
-                                <h4 className="text-white font-bold">Orphaned Risk Detection</h4>
-                                <p className="text-sm text-steelGrey">Automatically flags "High Impact" risks that don't have a mapped control or mitigation strategy.</p>
-                            </div>
-                        </li>
-                        <li className="flex items-start">
-                            <AlertOctagon size={20} className="text-orange-500 mr-3 mt-1 shrink-0" />
-                            <div>
-                                <h4 className="text-white font-bold">Efficiency Analysis</h4>
-                                <p className="text-sm text-steelGrey">Identifies "Manual" controls that run frequently (e.g., Daily), suggesting them as candidates for automation to reduce toil.</p>
-                            </div>
-                        </li>
-                        <li className="flex items-start">
-                            <AlertOctagon size={20} className="text-orange-500 mr-3 mt-1 shrink-0" />
-                            <div>
-                                <h4 className="text-white font-bold">Kanban Remediation</h4>
-                                <p className="text-sm text-steelGrey">Manage fixes on a drag-and-drop board: To Do, In Progress, Done.</p>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-                <div>
-                     <div className="bg-[#080C14] border border-deepDivider rounded-2xl p-6 relative overflow-hidden shadow-2xl">
-                         {/* Fake Kanban Board */}
-                         <div className="grid grid-cols-2 gap-4">
-                             <div className="bg-obsidianNavy/50 rounded-xl p-3 border border-deepDivider">
-                                 <div className="text-xs font-bold text-steelGrey uppercase mb-3 flex justify-between">
-                                     To Do <span className="bg-white/10 px-1.5 rounded text-white">2</span>
-                                 </div>
-                                 <div className="space-y-2">
-                                     <div className="bg-obsidianNavy p-3 rounded border border-riskHigh/30 shadow-sm relative overflow-hidden">
-                                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-riskHigh"></div>
-                                         <div className="text-xs font-bold text-white mb-1">Missing MFA on VPN</div>
-                                         <div className="flex items-center text-[10px] text-riskHigh">
-                                             <ShieldAlert size={10} className="mr-1"/> High Risk Gap
-                                         </div>
-                                     </div>
-                                      <div className="bg-obsidianNavy p-3 rounded border border-deepDivider shadow-sm">
-                                         <div className="text-xs font-bold text-white mb-1">Update Privacy Policy</div>
-                                         <div className="flex items-center text-[10px] text-steelGrey">
-                                             GDPR Compliance
-                                         </div>
-                                     </div>
-                                 </div>
-                             </div>
-                             <div className="bg-obsidianNavy/50 rounded-xl p-3 border border-deepDivider">
-                                 <div className="text-xs font-bold text-steelGrey uppercase mb-3 flex justify-between">
-                                     Resolved <span className="bg-white/10 px-1.5 rounded text-white">5</span>
-                                 </div>
-                                 <div className="space-y-2 opacity-60">
-                                     <div className="bg-obsidianNavy p-3 rounded border border-deepDivider">
-                                         <div className="text-xs text-white line-through">Patch Server 01</div>
-                                     </div>
-                                      <div className="bg-obsidianNavy p-3 rounded border border-deepDivider">
-                                         <div className="text-xs text-white line-through">Offboard Employee X</div>
-                                     </div>
-                                 </div>
-                             </div>
-                         </div>
-                     </div>
-                </div>
-            </div>
-
-            {/* 4. DEEP DIVE: RENEWAL MODE */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                <div className="order-2 lg:order-1">
-                    <div className="bg-[#080C14] border border-deepDivider rounded-2xl p-6 relative overflow-hidden shadow-2xl">
-                        <div className="absolute top-0 right-0 p-4">
-                            <div className="animate-pulse flex items-center space-x-2 bg-obsidianNavy border border-deepDivider px-3 py-1 rounded-full">
-                                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                                <span className="text-xs text-white font-bold">Scanning...</span>
-                            </div>
-                        </div>
-                        <div className="mt-8 grid grid-cols-3 gap-4 text-center">
-                            <div className="bg-obsidianNavy p-4 rounded-xl border border-deepDivider">
-                                <div className="text-2xl font-bold text-white mb-1">45%</div>
-                                <div className="text-[10px] text-steelGrey uppercase">Drift Score</div>
-                            </div>
-                            <div className="bg-obsidianNavy p-4 rounded-xl border border-deepDivider">
-                                <div className="text-2xl font-bold text-white mb-1">12</div>
-                                <div className="text-[10px] text-steelGrey uppercase">Manual Controls</div>
-                            </div>
-                            <div className="bg-obsidianNavy p-4 rounded-xl border border-deepDivider">
-                                <div className="text-2xl font-bold text-white mb-1">3 wks</div>
-                                <div className="text-[10px] text-steelGrey uppercase">Est. Effort</div>
-                            </div>
-                        </div>
-                        <div className="mt-6">
-                            <div className="flex justify-between text-xs text-steelGrey mb-2">
-                                <span>Control Stability</span>
-                                <span>Risk of Failure</span>
-                            </div>
-                            <div className="w-full h-2 bg-deepDivider rounded-full overflow-hidden">
-                                <div className="h-full bg-gradient-to-r from-emerald-500 via-yellow-500 to-riskHigh w-[60%]"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="order-1 lg:order-2">
-                    <div className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold uppercase tracking-wider mb-4 border border-emerald-500/20">
-                        Maintain
-                    </div>
-                    <h2 className="text-3xl font-bold text-white mb-4">Renewal Mode & Predictive Drift</h2>
-                    <p className="text-lg text-steelGrey mb-6 leading-relaxed">
-                        Compliance isn't a one-time event. Renewal Mode helps you prepare for next year's audit today.
-                    </p>
-                    <ul className="space-y-4">
-                        <li className="flex items-start">
-                            <TrendingDown size={20} className="text-emerald-500 mr-3 mt-1 shrink-0" />
-                            <div>
-                                <h4 className="text-white font-bold">Drift Detection</h4>
-                                <p className="text-sm text-steelGrey">The system analyzes your manual vs. automated controls to predict "Control Decay" over time.</p>
-                            </div>
-                        </li>
-                        <li className="flex items-start">
-                            <Clock size={20} className="text-emerald-500 mr-3 mt-1 shrink-0" />
-                            <div>
-                                <h4 className="text-white font-bold">Audit Effort Prediction</h4>
-                                <p className="text-sm text-steelGrey">Estimates whether your next audit will take 3 days or 3 weeks based on your current evidence hygiene.</p>
-                            </div>
-                        </li>
-                        <li className="flex items-start">
-                            <RefreshCw size={20} className="text-emerald-500 mr-3 mt-1 shrink-0" />
-                            <div>
-                                <h4 className="text-white font-bold">Cycle Management</h4>
-                                <p className="text-sm text-steelGrey">Configurable for Annual, Semi-Annual, or Quarterly cycles. We remind you when to start preparing.</p>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-        </div>
-    </PublicPageLayout>
-  );
-};
-
-// --- PRODUCT PAGE (Existing) ---
-export const ProductPage: React.FC<PageProps> = ({ navigate }) => {
-  const artifacts = [
-      {
-          title: "Readiness Score",
-          icon: PieChart,
-          color: "text-brightBlue",
-          bg: "bg-brightBlue/10",
-          desc: "An instant, quantifiable health check (0-100) of your compliance posture based on coverage of risks and controls."
-      },
-      {
-          title: "Process Flow",
-          icon: GitCommit,
-          color: "text-purple-500",
-          bg: "bg-purple-500/10",
-          desc: "AI-visualized step-by-step workflow mapping that automatically identifies 'Risk Hotspots' and decision points."
-      },
-      {
-          title: "RACI Matrix",
-          icon: Users,
-          color: "text-emerald-500",
-          bg: "bg-emerald-500/10",
-          desc: "Enforce Segregation of Duties (SoD) by clearly defining who is Responsible, Accountable, Consulted, and Informed for every step."
-      },
-      {
-          title: "Risk Heatmap",
-          icon: Grid,
-          color: "text-riskHigh",
-          bg: "bg-riskHigh/10",
-          desc: "Interactive visual matrix plotting Inherent vs. Residual risk based on Impact and Likelihood."
-      },
-      {
-          title: "Control Objectives",
-          icon: Target,
-          color: "text-orange-500",
-          bg: "bg-orange-500/10",
-          desc: "High-level strategic goals that group your risks and controls, ensuring alignment with business intent."
-      },
-      {
-          title: "Key Controls",
-          icon: Key,
-          color: "text-yellow-500",
-          bg: "bg-yellow-500/10",
-          desc: "The specific, testable activities (Preventive/Detecting) designed to mitigate your identified risks."
-      },
-      {
-          title: "Test Plans",
-          icon: ClipboardCheck,
-          color: "text-cyan-500",
-          bg: "bg-cyan-500/10",
-          desc: "Step-by-step instructions for auditors to verify control effectiveness, including sampling methodologies."
-      },
-      {
-          title: "Evidence Checklist",
-          icon: FileCheck,
-          color: "text-pink-500",
-          bg: "bg-pink-500/10",
-          desc: "A generated list of required artifacts (logs, screenshots, policies) linked directly to specific controls."
-      },
-      {
-          title: "Framework Mapping",
-          icon: BookOpen,
-          color: "text-white",
-          bg: "bg-white/10",
-          desc: "The 'Rosetta Stone' connecting your internal controls to specific articles in ISO, SOC 2, NIST, and more."
-      }
+// --- FEATURES PAGE ---
+export const FeaturesPage: React.FC<NavProps> = ({ navigate }) => {
+  const capabilities = [
+    { title: "AI Audit Package Generator", desc: "Automatically generate complete audit documentation based on your selected frameworks and context.", icon: Zap, color: "text-yellow-400" },
+    { title: "Process Flow (P01–Pxx)", desc: "Structured, standardized process flows that align with audit expectations and best practices.", icon: GitCommit, color: "text-brightBlue" },
+    { title: "RACI Matrix", desc: "Define responsibilities clearly across teams to reduce ambiguity and audit findings.", icon: Users, color: "text-purple-400" },
+    { title: "Risk & Control Matrix", desc: "Map risks to controls and ensure coverage across all compliance domains.", icon: ShieldAlert, color: "text-riskHigh" },
+    { title: "Control Objectives", desc: "Translate abstract requirements into actionable, testable controls.", icon: Target, color: "text-orange-400" },
+    { title: "Test Plans", desc: "Prepare audit-ready test scenarios aligned with each control.", icon: ClipboardCheck, color: "text-cyan-400" },
+    { title: "Evidence Checklist", desc: "Track required evidence and upload documentation in one place.", icon: FileCheck, color: "text-emerald-400" },
+    { title: "Audit Readiness Score", desc: "Get a real-time view of how prepared your organization is for an audit.", icon: PieChart, color: "text-pink-400" },
+    { title: "Framework Mapping", desc: "Map processes and controls across multiple frameworks without duplication.", icon: BookOpen, color: "text-white" },
+    { title: "Gap Tracking", desc: "Identify, assign, and resolve compliance gaps systematically.", icon: AlertOctagon, color: "text-red-500" },
+    { title: "Renewal Mode", desc: "Re-evaluate processes and controls during audits or periodic renewals using AI.", icon: RefreshCw, color: "text-blue-400" },
+    { title: "Editor Mode", desc: "Fully editable outputs — nothing is locked or black-boxed.", icon: Sliders, color: "text-steelGrey" },
+    { title: "Project Workspace", desc: "Manage all compliance work in a structured, centralized environment.", icon: Layers, color: "text-indigo-400" },
   ];
 
   return (
     <PublicPageLayout 
-        title="The Anatomy of an Audit Package" 
-        subtitle="Complimaxx doesn't just write text. It architects a complete compliance system. See exactly what you get."
+        title="AI-Powered Compliance." 
+        subtitle="Complimaxx helps organizations design, manage, and renew audit-ready processes — faster, clearer, and with zero manual spreadsheet pain."
         navigate={navigate}
     >
-        <div className="space-y-20">
-            
-            {/* Visual Intro */}
-            <div className="bg-gradient-to-br from-obsidianNavy to-[#0a1120] border border-deepDivider rounded-2xl p-8 md:p-12 relative overflow-hidden text-center">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brightBlue via-purple-500 to-emerald-500"></div>
-                <h2 className="text-3xl font-bold text-white mb-6">One Click, Nine Artifacts.</h2>
-                <p className="text-steelGrey text-lg max-w-3xl mx-auto mb-8">
-                    Stop manually linking spreadsheets. Our AI generates a relational database of compliance where every risk is linked to a control, and every control is mapped to a framework.
-                </p>
-                <div className="flex flex-wrap justify-center gap-4">
-                     <span className="px-4 py-2 bg-black/40 rounded-full border border-deepDivider text-sm text-steelGrey flex items-center">
-                        <CheckCircle size={14} className="text-brightBlue mr-2" /> Relational Mapping
-                     </span>
-                     <span className="px-4 py-2 bg-black/40 rounded-full border border-deepDivider text-sm text-steelGrey flex items-center">
-                        <CheckCircle size={14} className="text-brightBlue mr-2" /> Audit-Grade Language
-                     </span>
-                     <span className="px-4 py-2 bg-black/40 rounded-full border border-deepDivider text-sm text-steelGrey flex items-center">
-                        <CheckCircle size={14} className="text-brightBlue mr-2" /> Instant Export
-                     </span>
+        <div className="space-y-40">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
+                <div className="space-y-8">
+                    <h2 className="text-4xl font-black text-white uppercase tracking-tighter">The Full Lifecycle.</h2>
+                    <p className="text-lg text-steelGrey leading-relaxed font-medium">
+                        Instead of spreadsheets, static templates, or fragmented tools, Complimaxx provides a single workspace where compliance frameworks, processes, controls, risks, and evidence come together.
+                    </p>
+                    <p className="text-lg text-steelGrey leading-relaxed font-medium">
+                        Built with Gemini 3.0 AI and a secure Supabase infrastructure, Complimaxx supports the full compliance lifecycle — from first implementation to recurring audits and renewals.
+                    </p>
+                </div>
+                <div className="bg-obsidianNavy border border-white/5 rounded-[60px] p-12 shadow-2xl relative">
+                    <h3 className="text-sm font-black text-brightBlue uppercase tracking-[0.5em] mb-12">How it works</h3>
+                    <div className="space-y-10">
+                        {[
+                            { step: "01", title: "Select Framework", desc: "Choose from ISO, SOC, NIST, GDPR, NIS2, and more." },
+                            { step: "02", title: "Generate with AI", desc: "Audit-ready processes, controls, and RACI in minutes." },
+                            { step: "03", title: "Collect Evidence", desc: "Assign roles, track gaps, and upload evidence." },
+                            { step: "04", title: "Renew Continuously", desc: "Stay compliant as your organization evolves." }
+                        ].map((s, i) => (
+                            <div key={i} className="flex gap-6 items-start">
+                                <span className="text-xl font-black text-white/20">{s.step}</span>
+                                <div>
+                                    <h4 className="text-white font-bold mb-1 uppercase tracking-tight">{s.title}</h4>
+                                    <p className="text-sm text-steelGrey leading-relaxed">{s.desc}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
 
-            {/* THE ARTIFACT GRID */}
             <div>
-                <h3 className="text-2xl font-bold text-white mb-8 border-l-4 border-brightBlue pl-4">Included in every package</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {artifacts.map((item, i) => (
-                        <div key={i} className="bg-obsidianNavy border border-deepDivider rounded-xl p-6 hover:border-brightBlue transition-all duration-300 hover:-translate-y-1 group">
-                            <div className="flex items-center mb-4">
-                                <div className={`p-3 rounded-lg mr-4 ${item.bg} ${item.color} group-hover:scale-110 transition-transform`}>
-                                    <item.icon size={24} />
-                                </div>
-                                <h4 className="text-xl font-bold text-white">{item.title}</h4>
+                <h2 className="text-4xl md:text-7xl font-black text-white mb-24 uppercase tracking-tighter text-center">Core Capabilities.</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {capabilities.map((c, i) => (
+                        <div key={i} className="bg-obsidianNavy border border-white/5 rounded-[48px] p-12 hover:border-brightBlue transition-all group shadow-2xl flex flex-col">
+                            <div className={`w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center ${c.color} mb-10 group-hover:scale-110 transition-transform`}>
+                                <c.icon size={32} />
                             </div>
-                            <p className="text-steelGrey text-sm leading-relaxed">
-                                {item.desc}
-                            </p>
+                            <h3 className="text-xl font-black text-white mb-6 uppercase tracking-tight">{c.title}</h3>
+                            <p className="text-steelGrey text-sm leading-relaxed font-bold opacity-70 group-hover:opacity-100">{c.desc}</p>
                         </div>
                     ))}
                 </div>
-            </div>
-
-            {/* How it connects */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                <div>
-                    <h3 className="text-2xl font-bold text-white mb-4">From "Chaos" to "Connected"</h3>
-                    <p className="text-steelGrey mb-6">
-                        In traditional audits, these 9 artifacts live in separate documents, emails, and folders. Complimaxx unifies them.
-                    </p>
-                    <ul className="space-y-4">
-                        <li className="flex items-start">
-                            <div className="mt-1 mr-3 min-w-[20px] h-5 rounded-full bg-brightBlue/20 text-brightBlue flex items-center justify-center text-xs font-bold">1</div>
-                            <span className="text-sm text-white"><strong>Context-Aware:</strong> The AI reads your process description to identify specific risks, not generic ones.</span>
-                        </li>
-                        <li className="flex items-start">
-                            <div className="mt-1 mr-3 min-w-[20px] h-5 rounded-full bg-brightBlue/20 text-brightBlue flex items-center justify-center text-xs font-bold">2</div>
-                            <span className="text-sm text-white"><strong>Deep Linking:</strong> If you edit a Control, the Test Plan and Framework Mapping update automatically.</span>
-                        </li>
-                        <li className="flex items-start">
-                            <div className="mt-1 mr-3 min-w-[20px] h-5 rounded-full bg-brightBlue/20 text-brightBlue flex items-center justify-center text-xs font-bold">3</div>
-                            <span className="text-sm text-white"><strong>Gap Analysis:</strong> The system automatically flags "Orphaned Risks" (Risks without controls) via the Readiness Score.</span>
-                        </li>
-                    </ul>
-                </div>
-                <div className="relative">
-                     {/* Abstract visualization of connection */}
-                     <div className="bg-[#080C14] border border-deepDivider rounded-xl p-6 relative">
-                         <div className="flex justify-between items-center mb-8 opacity-50">
-                             <div className="w-12 h-12 rounded bg-deepDivider"></div>
-                             <div className="h-0.5 flex-1 bg-deepDivider mx-4 border-t border-dashed"></div>
-                             <div className="w-12 h-12 rounded bg-deepDivider"></div>
-                         </div>
-                         <div className="bg-obsidianNavy border border-brightBlue rounded-lg p-4 shadow-[0_0_30px_rgba(0,140,255,0.1)] relative z-10">
-                             <div className="flex items-center mb-3 text-brightBlue">
-                                 <ShieldCheck size={20} className="mr-2"/> <span className="font-bold">Control C-04</span>
-                             </div>
-                             <div className="space-y-2">
-                                 <div className="text-xs text-steelGrey flex justify-between">
-                                     <span>Mitigates:</span> <span className="text-white">Risk R-12 (Data Loss)</span>
-                                 </div>
-                                 <div className="text-xs text-steelGrey flex justify-between">
-                                     <span>Verified by:</span> <span className="text-white">Test Plan T-02</span>
-                                 </div>
-                                 <div className="text-xs text-steelGrey flex justify-between">
-                                     <span>Maps to:</span> <span className="text-white">ISO 27001 A.9.4</span>
-                                 </div>
-                             </div>
-                         </div>
-                     </div>
-                </div>
-            </div>
-
-            <div className="text-center pt-12 pb-12">
-                <button onClick={() => navigate(AppRoute.GET_STARTED)} className="bg-brightBlue hover:bg-blue-600 text-white px-10 py-4 rounded-full font-bold text-lg shadow-lg shadow-blue-500/20 transition-all hover:scale-105">
-                    Generate Your First Package
-                </button>
             </div>
         </div>
     </PublicPageLayout>
   );
 };
 
-// Helper Icon for visual
-const ShieldCheck = ({size, className}: any) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-        <path d="m9 12 2 2 4-4" />
-    </svg>
-);
-
 // --- PRICING PAGE ---
-export const PricingPage: React.FC<PageProps> = ({ navigate }) => {
+export const PricingPage: React.FC<NavProps> = ({ navigate }) => {
+  return (
+    <PublicPageLayout 
+        title="Simple Pricing." 
+        subtitle="Full Power. No Feature Walls. All plans include full access to the complete Complimaxx platform."
+        navigate={navigate}
+    >
+        <div className="space-y-32">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                {[
+                  { plan: "Essentials", price: "99", desc: "Best for startups and small teams starting with structured compliance.", features: ["2 Frameworks", "1 User", "15 credits / month", "Full access"] },
+                  { plan: "Pro", price: "299", desc: "Best for growing organizations managing multiple standards.", features: ["Up to 10 Frameworks", "Up to 3 Users", "60 credits / month"], highlight: true },
+                  { plan: "Enterprise", price: "699", desc: "Best for mature, audit-driven organizations.", features: ["All 96 Frameworks", "Up to 10 Users", "Unlimited credits", "Full branding"] }
+                ].map((p, i) => (
+                  <div key={i} className={`rounded-[60px] p-16 flex flex-col items-center border transition-all duration-700 shadow-2xl relative ${p.highlight ? 'bg-gradient-to-b from-[#1C2533] to-techBlack border-2 border-brightBlue scale-105 z-10' : 'bg-obsidianNavy border border-white/5 hover:border-brightBlue/30'}`}>
+                    {p.highlight && <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-brightBlue text-white text-[10px] font-black px-12 py-3.5 rounded-full uppercase tracking-[0.5em] shadow-lg">Most Popular</div>}
+                    <h3 className="text-2xl font-black mb-4 uppercase tracking-tight text-white">{p.plan}</h3>
+                    <p className="text-[10px] text-steelGrey uppercase font-black tracking-widest mb-10 text-center leading-relaxed">{p.desc}</p>
+                    <div className="text-7xl font-black text-white mb-16 flex items-start">
+                       <span className="text-2xl mt-4 mr-2">€</span>{p.price}<span className="text-xl text-steelGrey font-medium self-end mb-4">/mo</span>
+                    </div>
+                    <div className="flex-1 w-full flex justify-center mb-20">
+                      <ul className="space-y-4 text-left w-fit">
+                        {p.features.map((f, fi) => (
+                          <li key={fi} className="flex items-center text-[10px] font-black text-steelGrey uppercase tracking-widest">
+                            <Check size={14} className="text-brightBlue mr-3 shrink-0" /> {f}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <button onClick={() => navigate(AppRoute.GET_STARTED)} className={`w-full py-6 rounded-2xl font-black text-[10px] uppercase tracking-[0.4em] transition-all ${p.highlight ? 'bg-brightBlue text-white shadow-xl hover:scale-105' : 'bg-white/5 text-white hover:bg-brightBlue'}`}>
+                      Start Free Trial
+                    </button>
+                  </div>
+                ))}
+            </div>
+
+            <div className="bg-obsidianNavy border border-white/5 rounded-[60px] p-16 max-w-4xl mx-auto shadow-2xl">
+                <h3 className="text-2xl font-black text-white mb-10 uppercase tracking-tighter text-center">How AI Credits Work.</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                    <div className="space-y-6">
+                        <h4 className="text-brightBlue font-black uppercase text-xs tracking-widest">Credits Consumed By:</h4>
+                        <ul className="space-y-4">
+                            {["Generating a new process", "Renewing a process for an audit cycle", "Re-mapping processes to new frameworks"].map((item, i) => (
+                                <li key={i} className="flex items-center text-sm font-bold text-white"><Zap size={14} className="mr-3 text-brightBlue" /> {item}</li>
+                            ))}
+                        </ul>
+                    </div>
+                    <div className="opacity-50 space-y-6">
+                        <h4 className="text-steelGrey font-black uppercase text-xs tracking-widest">Always Free / Unlimited:</h4>
+                        <ul className="space-y-4">
+                            {["Editing artifacts", "Evidence uploads", "Exports", "Daily collaboration"].map((item, i) => (
+                                <li key={i} className="flex items-center text-sm font-bold text-steelGrey"><Check size={14} className="mr-3" /> {item}</li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </PublicPageLayout>
+  );
+};
+
+// --- GET STARTED PAGE ---
+export const GetStartedPage: React.FC<NavProps> = ({ navigate }) => {
     return (
-        <PublicPageLayout title="Simple, Transparent Pricing" subtitle="Choose the plan that fits your compliance maturity." navigate={navigate}>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-                 <div className="bg-techBlack border border-deepDivider rounded-2xl p-8">
-                     <h3 className="text-xl font-bold text-white mb-2">Essentials</h3>
-                     <p className="text-steelGrey text-sm mb-6">For small teams.</p>
-                     <div className="text-4xl font-bold text-white mb-6">€99<span className="text-lg text-steelGrey font-normal">/mo</span></div>
-                     <button onClick={() => navigate(AppRoute.GET_STARTED)} className="w-full bg-deepDivider hover:bg-white/10 text-white font-bold py-3 rounded-lg">Start Trial</button>
-                 </div>
-                 <div className="bg-obsidianNavy border border-brightBlue rounded-2xl p-8 relative shadow-2xl scale-105">
-                     <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-brightBlue text-white text-xs font-bold px-3 py-1 rounded-full uppercase">Most Popular</div>
-                     <h3 className="text-xl font-bold text-white mb-2">Pro</h3>
-                     <p className="text-steelGrey text-sm mb-6">For growing companies.</p>
-                     <div className="text-4xl font-bold text-white mb-6">€299<span className="text-lg text-steelGrey font-normal">/mo</span></div>
-                     <button onClick={() => navigate(AppRoute.GET_STARTED)} className="w-full bg-brightBlue hover:bg-blue-600 text-white font-bold py-3 rounded-lg shadow-lg">Start Trial</button>
-                 </div>
-                 <div className="bg-techBlack border border-deepDivider rounded-2xl p-8">
-                     <h3 className="text-xl font-bold text-white mb-2">Enterprise</h3>
-                     <p className="text-steelGrey text-sm mb-6">For large organizations.</p>
-                     <div className="text-4xl font-bold text-white mb-6">Custom</div>
-                     <button onClick={() => navigate(AppRoute.CONTACT)} className="w-full bg-white text-techBlack hover:bg-gray-200 font-bold py-3 rounded-lg">Contact Sales</button>
-                 </div>
+        <PublicPageLayout 
+            title="Start Your Journey." 
+            subtitle="Getting started with Complimaxx takes minutes — not months. Build audit readiness with confidence."
+            navigate={navigate}
+        >
+            <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
+                <div className="space-y-12">
+                    <h2 className="text-4xl font-black text-white uppercase tracking-tighter">Roadmap to Readiness.</h2>
+                    <div className="space-y-10">
+                        {[
+                            { step: "01", title: "Create Identity", desc: "Securely register your organizational workspace." },
+                            { step: "02", title: "Select Frameworks", desc: "Choose from 96 global standards to align with." },
+                            { step: "03", title: "Generate Artifacts", desc: "Build your first audit package with neural automation." },
+                            { step: "04", title: "Invite Collaborators", desc: "Bring your team into the workflow for evidence collection." },
+                            { step: "05", title: "Prepare for Audit", desc: "Generate exports and readiness scores for auditors." }
+                        ].map((s, i) => (
+                            <div key={i} className="flex gap-8 items-start">
+                                <div className="w-12 h-12 bg-brightBlue/10 rounded-xl flex items-center justify-center text-brightBlue font-black text-lg border border-brightBlue/20 shrink-0">{s.step}</div>
+                                <div>
+                                    <h4 className="text-white font-bold text-xl mb-1 uppercase tracking-tight">{s.title}</h4>
+                                    <p className="text-steelGrey font-medium leading-relaxed">{s.desc}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <div className="bg-obsidianNavy border border-white/5 rounded-[60px] p-16 shadow-2xl flex flex-col items-center text-center">
+                    <Star size={48} className="text-brightBlue mb-8 animate-pulse" />
+                    <h3 className="text-3xl font-black text-white mb-6 uppercase tracking-tight">Access Terminal.</h3>
+                    <p className="text-steelGrey font-medium mb-12 leading-relaxed">No credit card required for the first 3 days. Start your audit-ready transformation today.</p>
+                    <button onClick={() => navigate(AppRoute.LOGIN)} className="w-full bg-brightBlue hover:bg-blue-600 text-white py-6 rounded-2xl font-black text-xs uppercase tracking-[0.4em] shadow-xl mb-6">Create Free Account</button>
+                    <button onClick={() => navigate(AppRoute.CONTACT)} className="w-full bg-white/5 hover:bg-white/10 text-white py-6 rounded-2xl font-black text-xs uppercase tracking-[0.4em] border border-white/10">Book a Demo</button>
+                </div>
             </div>
         </PublicPageLayout>
     );
 };
 
 // --- ABOUT PAGE ---
-export const AboutPage: React.FC<PageProps> = ({ navigate }) => {
+export const AboutPage: React.FC<NavProps> = ({ navigate }) => {
     return (
-        <PublicPageLayout title="About Complimaxx" subtitle="We're on a mission to automate the pain out of compliance." navigate={navigate}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-                <div>
-                    <h3 className="text-2xl font-bold text-white mb-4">Our Story</h3>
-                    <p className="text-steelGrey leading-relaxed mb-6">
-                        Complimaxx was founded by former auditors and security engineers who were tired of managing compliance in spreadsheets. We realized that 80% of audit prep is repetitive pattern matching—perfect for AI.
+        <PublicPageLayout 
+            title="Company." 
+            subtitle="Automating the fragmentation, speed, and manual overhead of global compliance work."
+            navigate={navigate}
+        >
+            <div className="max-w-4xl mx-auto space-y-24">
+                <div className="bg-obsidianNavy border border-white/5 rounded-[60px] p-20 text-center shadow-2xl relative overflow-hidden">
+                    <div className="absolute inset-0 bg-tech-grid opacity-5"></div>
+                    <h2 className="text-4xl font-black text-white mb-12 uppercase tracking-tighter">About Us.</h2>
+                    <p className="text-xl text-steelGrey leading-relaxed font-medium mb-12">
+                        Complimaxx was built to solve a simple problem: compliance work is too manual, too fragmented, and too slow.
                     </p>
-                    <p className="text-steelGrey leading-relaxed">
-                        Today, we help thousands of companies worldwide generate audit-ready documentation in minutes, not months.
+                    <p className="text-xl text-steelGrey leading-relaxed font-medium">
+                        We combine AI, process design, and audit expertise to help organizations build compliance systems that actually scale. Our mission is to make enterprise-grade compliance accessible — without complexity, spreadsheets, or vendor lock-in.
                     </p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-obsidianNavy p-6 rounded-xl border border-deepDivider text-center">
-                        <div className="text-3xl font-bold text-brightBlue mb-1">500+</div>
-                        <div className="text-xs text-steelGrey uppercase">Companies</div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                    {[
+                        { label: "Founding", val: "2024" },
+                        { label: "Frameworks", val: "96+" },
+                        { label: "Security", val: "AES-256" },
+                        { label: "Support", val: "24/7" }
+                    ].map((item, i) => (
+                        <div key={i} className="text-center">
+                            <div className="text-4xl font-black text-white mb-2 tracking-tighter">{item.val}</div>
+                            <div className="text-[10px] font-black text-brightBlue uppercase tracking-widest">{item.label}</div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </PublicPageLayout>
+    );
+};
+
+// --- CONTACT PAGE ---
+export const ContactPage: React.FC<NavProps> = ({ navigate }) => {
+    return (
+        <PublicPageLayout 
+            title="Contact." 
+            subtitle="Have questions, need support, or want to discuss enterprise deployments? We respond within one business day."
+            navigate={navigate}
+        >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-20">
+                <div className="space-y-12">
+                    <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Our Channels.</h2>
+                    <div className="space-y-8">
+                        <div className="flex items-center gap-6 group">
+                            <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center text-brightBlue group-hover:bg-brightBlue group-hover:text-white transition-all shadow-xl"><Mail size={24} /></div>
+                            <div>
+                                <div className="text-[10px] font-black text-steelGrey uppercase tracking-widest mb-1">Support</div>
+                                <div className="text-lg font-bold text-white">support@complimaxx.com</div>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-6 group">
+                            <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-all shadow-xl"><Briefcase size={24} /></div>
+                            <div>
+                                <div className="text-[10px] font-black text-steelGrey uppercase tracking-widest mb-1">Sales</div>
+                                <div className="text-lg font-bold text-white">sales@complimaxx.com</div>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-6 group">
+                            <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-all shadow-xl"><Linkedin size={24} /></div>
+                            <div>
+                                <div className="text-[10px] font-black text-steelGrey uppercase tracking-widest mb-1">Corporate</div>
+                                <div className="text-lg font-bold text-white">linkedin.com/company/complimaxx</div>
+                            </div>
+                        </div>
                     </div>
-                    <div className="bg-obsidianNavy p-6 rounded-xl border border-deepDivider text-center">
-                        <div className="text-3xl font-bold text-purple-500 mb-1">96</div>
-                        <div className="text-xs text-steelGrey uppercase">Frameworks</div>
-                    </div>
-                    <div className="bg-obsidianNavy p-6 rounded-xl border border-deepDivider text-center">
-                        <div className="text-3xl font-bold text-emerald-500 mb-1">1M+</div>
-                        <div className="text-xs text-steelGrey uppercase">Controls Generated</div>
-                    </div>
-                    <div className="bg-obsidianNavy p-6 rounded-xl border border-deepDivider text-center">
-                        <div className="text-3xl font-bold text-orange-500 mb-1">24/7</div>
-                        <div className="text-xs text-steelGrey uppercase">Support</div>
-                    </div>
+                </div>
+                <div className="bg-obsidianNavy border border-white/5 rounded-[60px] p-16 shadow-2xl">
+                    <form className="space-y-8" onSubmit={(e) => e.preventDefault()}>
+                        <div>
+                            <label className="text-[10px] font-black text-steelGrey uppercase tracking-[0.4em] mb-4 block">Full Name</label>
+                            <input type="text" className="w-full bg-[#080C14] border border-white/5 rounded-2xl px-8 py-5 text-white focus:border-brightBlue outline-none font-medium transition-all" placeholder="John Doe" />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black text-steelGrey uppercase tracking-[0.4em] mb-4 block">Email Address</label>
+                            <input type="email" className="w-full bg-[#080C14] border border-white/5 rounded-2xl px-8 py-5 text-white focus:border-brightBlue outline-none font-medium transition-all" placeholder="name@company.com" />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black text-steelGrey uppercase tracking-[0.4em] mb-4 block">Inquiry Type</label>
+                            <select className="w-full bg-[#080C14] border border-white/5 rounded-2xl px-8 py-5 text-white focus:border-brightBlue outline-none font-medium transition-all">
+                                <option>General Inquiry</option>
+                                <option>Enterprise Demo</option>
+                                <option>Technical Support</option>
+                                <option>Partnership</option>
+                            </select>
+                        </div>
+                        <button className="w-full bg-brightBlue hover:bg-blue-600 text-white py-6 rounded-2xl font-black text-xs uppercase tracking-[0.4em] shadow-xl transition-all active:scale-95">Send Message</button>
+                    </form>
                 </div>
             </div>
         </PublicPageLayout>
@@ -606,184 +386,165 @@ export const AboutPage: React.FC<PageProps> = ({ navigate }) => {
 };
 
 // --- SECURITY PAGE ---
-export const SecurityPage: React.FC<PageProps> = ({ navigate }) => {
+export const SecurityPage: React.FC<NavProps> = ({ navigate }) => {
     return (
-        <PublicPageLayout title="Security & Trust" subtitle="Your data security is our top priority." navigate={navigate}>
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-                <div className="bg-obsidianNavy p-8 rounded-xl border border-deepDivider">
-                    <Shield size={32} className="text-emerald-500 mb-4" />
-                    <h3 className="text-xl font-bold text-white mb-2">SOC 2 Type II</h3>
-                    <p className="text-steelGrey text-sm">We are SOC 2 Type II compliant, verifying our security, availability, and confidentiality controls.</p>
-                </div>
-                <div className="bg-obsidianNavy p-8 rounded-xl border border-deepDivider">
-                    <Lock size={32} className="text-brightBlue mb-4" />
-                    <h3 className="text-xl font-bold text-white mb-2">Data Encryption</h3>
-                    <p className="text-steelGrey text-sm">All data is encrypted at rest (AES-256) and in transit (TLS 1.3).</p>
-                </div>
-                <div className="bg-obsidianNavy p-8 rounded-xl border border-deepDivider">
-                    <Server size={32} className="text-purple-500 mb-4" />
-                    <h3 className="text-xl font-bold text-white mb-2">Data Residency</h3>
-                    <p className="text-steelGrey text-sm">Choose where your data is stored. We offer hosting options in the US, EU, and APAC.</p>
-                </div>
+        <PublicPageLayout 
+            title="Security." 
+            subtitle="Foundationally built on secure industry standards to protect your most sensitive compliance artifacts."
+            navigate={navigate}
+        >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                {[
+                    { title: "Secure Cloud Infra", desc: "Built on Supabase (PostgreSQL) with dedicated database isolation and SOC2-compliant data centers.", icon: Database, color: "text-emerald-400" },
+                    { title: "End-to-End Encryption", desc: "All data is encrypted both at rest (AES-256) and in transit (TLS 1.3) following banking protocols.", icon: Lock, color: "text-brightBlue" },
+                    { title: "RBAC Controls", desc: "Granular Role-Based Access Control ensures only authorized team members see sensitive data.", icon: ShieldCheck, color: "text-purple-400" },
+                    { title: "Isolated AI Contexts", desc: "Neural processing occurs in strictly isolated sessions to prevent any cross-tenant data leakage.", icon: Cpu, color: "text-yellow-400" },
+                    { title: "Regular Reviews", desc: "Infrastructure and code are subject to recurring security audits and vulnerability scans.", icon: History, color: "text-riskHigh" },
+                    { title: "SLA Guaranteed", desc: "High availability architecture with 99.9% uptime guaranteed for critical audit windows.", icon: Globe, color: "text-blue-400" }
+                ].map((s, i) => (
+                    <div key={i} className="bg-obsidianNavy border border-white/5 rounded-[48px] p-12 hover:border-emerald-400 transition-all group shadow-2xl">
+                        <div className={`w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center ${s.color} mb-10 group-hover:scale-110 transition-transform`}><s.icon size={32} /></div>
+                        <h3 className="text-xl font-black text-white mb-6 uppercase tracking-tight">{s.title}</h3>
+                        <p className="text-steelGrey text-sm leading-relaxed font-bold opacity-70 group-hover:opacity-100">{s.desc}</p>
+                    </div>
+                ))}
+            </div>
+        </PublicPageLayout>
+    );
+};
+
+// --- LEGAL PAGES (Generic) ---
+export const LegalPage: React.FC<{ navigate: (route: AppRoute) => void; type: string }> = ({ navigate, type }) => {
+    return (
+        <PublicPageLayout 
+            title={type} 
+            subtitle={`Official documentation for the Complimaxx platform. Last updated: ${new Date().toLocaleDateString()}`}
+            navigate={navigate}
+        >
+            <div className="max-w-4xl mx-auto bg-obsidianNavy border border-white/5 rounded-[60px] p-20 text-left space-y-12 shadow-2xl">
+                 <div className="flex items-center gap-4 text-brightBlue mb-12">
+                     <Info size={32} />
+                     <h2 className="text-2xl font-black uppercase tracking-tighter">Standard {type} Provisions.</h2>
+                 </div>
+                 <div className="space-y-8 text-steelGrey leading-relaxed font-medium">
+                    <p>Complimaxx respects your trust and processes all personal data in accordance with applicable laws, including GDPR and CCPA. We collect only what is necessary to provide and improve our core neural automation services.</p>
+                    <h3 className="text-white font-black uppercase text-sm tracking-widest mt-12">1. Scope of Use</h3>
+                    <p>By using Complimaxx, you agree to our terms. We provide an AI-powered operating system for audit readiness. Users are responsible for the accuracy of organizational context provided to the engine.</p>
+                    <h3 className="text-white font-black uppercase text-sm tracking-widest mt-12">2. Data Processor Agreement</h3>
+                    <p>Complimaxx acts as a data processor for customer data. Our standard DPA outlines security measures, subprocessors, and data handling responsibilities in compliance with GDPR regulations.</p>
+                    <h3 className="text-white font-black uppercase text-sm tracking-widest mt-12">3. Limitations</h3>
+                    <p>While Complimaxx generates audit-ready artifacts, it is a tool for efficiency and documentation. Professional certification requires formal review by accredited independent auditors.</p>
+                    <div className="pt-12 border-t border-white/5 flex justify-between items-center text-[10px] font-black uppercase tracking-[0.4em]">
+                        <span>Complimaxx Legal Dept.</span>
+                        <button className="text-brightBlue hover:underline">Request Full Contract PDF</button>
+                    </div>
+                 </div>
             </div>
         </PublicPageLayout>
     );
 };
 
 // --- HELP CENTER ---
-export const HelpCenterPage: React.FC<PageProps> = ({ navigate }) => {
+export const HelpCenterPage: React.FC<NavProps> = ({ navigate }) => {
     return (
-        <PublicPageLayout title="Help Center" subtitle="Guides, tutorials, and support for your compliance journey." navigate={navigate}>
-             <div className="max-w-2xl mx-auto mb-12">
-                 <div className="relative">
-                     <input type="text" placeholder="Search for help articles..." className="w-full bg-obsidianNavy border border-deepDivider rounded-lg py-4 pl-12 pr-4 text-white focus:border-brightBlue outline-none" />
-                     <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-steelGrey" />
-                 </div>
-             </div>
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                 {['Getting Started', 'Framework Guides', 'Account Management', 'API Documentation', 'Troubleshooting', 'Billing'].map((topic, i) => (
-                     <div key={i} className="bg-[#080C14] border border-deepDivider p-6 rounded-xl hover:border-brightBlue cursor-pointer transition-colors group">
-                         <h4 className="font-bold text-white mb-2 group-hover:text-brightBlue">{topic}</h4>
-                         <p className="text-sm text-steelGrey">View articles &rarr;</p>
-                     </div>
-                 ))}
-             </div>
-        </PublicPageLayout>
-    );
-};
-
-// --- CONTACT PAGE ---
-export const ContactPage: React.FC<PageProps> = ({ navigate }) => {
-    return (
-        <PublicPageLayout title="Contact Us" subtitle="We'd love to hear from you." navigate={navigate}>
-             <div className="max-w-xl mx-auto bg-obsidianNavy border border-deepDivider rounded-2xl p-8">
-                 <div className="space-y-4">
-                     <div>
-                         <label className="block text-sm font-bold text-steelGrey mb-2">Name</label>
-                         <input type="text" className="w-full bg-[#080C14] border border-deepDivider rounded-lg p-3 text-white focus:border-brightBlue outline-none" />
-                     </div>
-                     <div>
-                         <label className="block text-sm font-bold text-steelGrey mb-2">Email</label>
-                         <input type="email" className="w-full bg-[#080C14] border border-deepDivider rounded-lg p-3 text-white focus:border-brightBlue outline-none" />
-                     </div>
-                     <div>
-                         <label className="block text-sm font-bold text-steelGrey mb-2">Message</label>
-                         <textarea className="w-full h-32 bg-[#080C14] border border-deepDivider rounded-lg p-3 text-white focus:border-brightBlue outline-none"></textarea>
-                     </div>
-                     <button className="w-full bg-brightBlue hover:bg-blue-600 text-white font-bold py-3 rounded-lg shadow-lg">Send Message</button>
-                 </div>
-                 <div className="mt-8 pt-8 border-t border-deepDivider flex justify-between text-steelGrey text-sm">
-                     <div className="flex items-center"><Mail size={16} className="mr-2"/> support@complimaxx.com</div>
-                     <div className="flex items-center"><Phone size={16} className="mr-2"/> +1 (555) 123-4567</div>
-                 </div>
-             </div>
-        </PublicPageLayout>
-    );
-};
-
-// --- LEGAL PAGE ---
-export const LegalPage: React.FC<{ navigate: (route: AppRoute) => void; type: string }> = ({ navigate, type }) => {
-    return (
-        <PublicPageLayout title={type} subtitle={`Last updated: ${new Date().toLocaleDateString()}`} navigate={navigate}>
-             <div className="max-w-4xl mx-auto bg-obsidianNavy border border-deepDivider rounded-2xl p-12 text-left space-y-8 text-steelGrey">
-                 <h2 className="text-2xl font-bold text-white">1. Overview</h2>
-                 <p>This is a placeholder for the official {type} document. In a production environment, this page would contain the full legal text prepared by counsel.</p>
-                 <h2 className="text-2xl font-bold text-white">2. Data Usage</h2>
-                 <p>We respect your data and privacy. Please review our full policies to understand how we collect, store, and process your information.</p>
-                 <h2 className="text-2xl font-bold text-white">3. Contact</h2>
-                 <p>If you have any questions regarding this document, please contact legal@complimaxx.com.</p>
-             </div>
-        </PublicPageLayout>
-    );
-};
-
-// --- GET STARTED PAGE ---
-export const GetStartedPage: React.FC<PageProps> = ({ navigate }) => {
-    return (
-        <PublicPageLayout title="Start Your Free Trial" subtitle="No credit card required. Cancel anytime." navigate={navigate}>
-             <div className="max-w-md mx-auto bg-obsidianNavy border border-deepDivider rounded-2xl p-8">
-                 <button className="w-full bg-white text-techBlack font-bold py-3 rounded-lg flex items-center justify-center mb-4 hover:bg-gray-100">
-                     <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 h-4 mr-2" />
-                     Sign up with Google
-                 </button>
-                 <div className="text-center text-steelGrey text-xs my-4 uppercase tracking-widest">Or continue with email</div>
-                 <div className="space-y-4">
-                     <input type="email" placeholder="Work Email" className="w-full bg-[#080C14] border border-deepDivider rounded-lg p-3 text-white focus:border-brightBlue outline-none" />
-                     <input type="password" placeholder="Password" className="w-full bg-[#080C14] border border-deepDivider rounded-lg p-3 text-white focus:border-brightBlue outline-none" />
-                     <button className="w-full bg-brightBlue hover:bg-blue-600 text-white font-bold py-3 rounded-lg shadow-lg">Create Account</button>
-                 </div>
-                 <p className="text-xs text-steelGrey text-center mt-6">
-                     By signing up, you agree to our <span className="text-brightBlue cursor-pointer" onClick={() => navigate(AppRoute.TERMS)}>Terms</span> and <span className="text-brightBlue cursor-pointer" onClick={() => navigate(AppRoute.PRIVACY)}>Privacy Policy</span>.
-                 </p>
-             </div>
+        <PublicPageLayout 
+            title="Help Center." 
+            subtitle="Step-by-step guides, best practices, and masterclasses in neural compliance."
+            navigate={navigate}
+        >
+            <div className="max-w-3xl mx-auto mb-24">
+                <div className="relative group">
+                    <Search className="absolute left-8 top-1/2 -translate-y-1/2 text-steelGrey group-focus-within:text-brightBlue transition-colors" size={24} />
+                    <input type="text" placeholder="Search knowledge base..." className="w-full bg-obsidianNavy border border-white/5 rounded-[32px] py-8 pl-20 pr-10 text-white text-lg font-medium focus:border-brightBlue outline-none shadow-2xl transition-all" />
+                </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {[
+                    { topic: "Getting Started", count: 12, icon: Play },
+                    { topic: "Framework Guides", count: 48, icon: BookOpen },
+                    { topic: "Account & Billing", count: 8, icon: CreditCard },
+                    { topic: "API & Dev Docs", count: 15, icon: Workflow },
+                    { topic: "Troubleshooting", count: 24, icon: ShieldAlert },
+                    { topic: "Governance Tips", count: 32, icon: Target }
+                ].map((item, i) => (
+                    <div key={i} className="bg-obsidianNavy border border-white/5 p-12 rounded-[48px] hover:border-brightBlue cursor-pointer transition-all group shadow-2xl flex flex-col items-center">
+                        <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center text-brightBlue mb-10 group-hover:scale-110 transition-transform"><item.icon size={32} /></div>
+                        <h4 className="font-black text-white mb-4 uppercase tracking-tight">{item.topic}</h4>
+                        <p className="text-sm text-steelGrey font-bold uppercase tracking-widest">{item.count} Articles &rarr;</p>
+                    </div>
+                ))}
+            </div>
         </PublicPageLayout>
     );
 };
 
 // --- TUTORIALS PAGE ---
-export const TutorialsPage: React.FC<PageProps> = ({ navigate }) => {
+export const TutorialsPage: React.FC<NavProps> = ({ navigate }) => {
     return (
-        <PublicPageLayout title="Video Tutorials" subtitle="Learn how to master Complimaxx in minutes." navigate={navigate}>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                 {[
-                     "How to generate your first audit package",
-                     "Customizing controls and risks",
-                     "Managing evidence collection",
-                     "Using the Renewal Mode dashboard"
-                 ].map((title, i) => (
-                     <div key={i} className="bg-obsidianNavy border border-deepDivider rounded-xl overflow-hidden group hover:border-brightBlue transition-all cursor-pointer">
-                         <div className="h-48 bg-black/50 flex items-center justify-center relative">
-                             <PlayCircle size={48} className="text-white opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all" />
-                         </div>
-                         <div className="p-6">
-                             <h3 className="font-bold text-white text-lg mb-2">{title}</h3>
-                             <p className="text-sm text-steelGrey">5 min watch</p>
-                         </div>
-                     </div>
-                 ))}
-             </div>
+        <PublicPageLayout 
+            title="Tutorials." 
+            subtitle="Master the Complimaxx terminal in minutes with our visual learning library."
+            navigate={navigate}
+        >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                {[
+                    { title: "Set up your first compliance project", time: "5 min" },
+                    { title: "Generate and renew processes", time: "8 min" },
+                    { title: "Prepare for audits (Masterclass)", time: "15 min" },
+                    { title: "Manage frameworks and teams", time: "6 min" }
+                ].map((item, i) => (
+                    <div key={i} className="bg-obsidianNavy border border-white/5 rounded-[60px] overflow-hidden group hover:border-brightBlue transition-all cursor-pointer shadow-2xl">
+                        <div className="h-72 bg-black/50 flex items-center justify-center relative">
+                            <div className="absolute inset-0 bg-tech-grid opacity-10"></div>
+                            <Play size={64} className="text-white opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all filter drop-shadow-2xl" />
+                        </div>
+                        <div className="p-12">
+                            <h3 className="font-black text-white text-2xl mb-4 uppercase tracking-tighter">{item.title}</h3>
+                            <p className="text-sm text-steelGrey font-bold uppercase tracking-widest flex items-center"><Clock size={14} className="mr-2" /> {item.time} watch time</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
         </PublicPageLayout>
     );
 };
 
-// --- BLOG PAGE ---
-export const BlogPage: React.FC<PageProps> = ({ navigate }) => {
-    return (
-        <PublicPageLayout title="Compliance Blog" subtitle="Insights, news, and guides from industry experts." navigate={navigate}>
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                 {[
-                     "The Future of AI in Auditing",
-                     "ISO 27001:2022 Changes Explained",
-                     "How to Survive a SOC 2 Audit",
-                     "GDPR Compliance for Startups",
-                     "Automating Evidence Collection",
-                     "The Cost of Non-Compliance"
-                 ].map((title, i) => (
-                     <div key={i} className="bg-obsidianNavy border border-deepDivider rounded-xl overflow-hidden hover:border-brightBlue transition-colors cursor-pointer group">
-                         <div className="h-40 bg-gradient-to-br from-gray-800 to-gray-900"></div>
-                         <div className="p-6">
-                             <div className="text-xs text-brightBlue font-bold uppercase mb-2">Article</div>
-                             <h3 className="font-bold text-white text-lg mb-2 group-hover:text-brightBlue transition-colors">{title}</h3>
-                             <p className="text-sm text-steelGrey">Read more &rarr;</p>
-                         </div>
-                     </div>
-                 ))}
-             </div>
-        </PublicPageLayout>
-    );
-};
+// --- FAQ PAGE ---
+export const FAQPage: React.FC<NavProps> = ({ navigate }) => {
+    const [openIdx, setOpenIdx] = useState<number | null>(null);
+    const faqs = [
+        { q: "Is every feature included in all plans?", a: "Yes. All plans include full access to the entire platform including Checklists, Gap Tracking, and Renewal Mode. We only scale by complexity and frameworks." },
+        { q: "What happens if I run out of AI credits?", a: "You can continue editing and viewing your data. AI generation and renewals resume after your monthly credit reset or a manual plan upgrade." },
+        { q: "Can I downgrade my plan?", a: "Yes. Existing data remains accessible, but AI credit limits and framework caps apply immediately after the downgrade." },
+        { q: "Is Complimaxx suitable for enterprise audits?", a: "Absolutely. Complimaxx is designed for formal ISO 27001, SOC 2, NIST, and NIS2 audit environments, reducing manual prep time by up to 80%." }
+    ];
 
-// --- NEWSLETTER PAGE ---
-export const NewsletterPage: React.FC<PageProps> = ({ navigate }) => {
     return (
-        <PublicPageLayout title="Subscribe to Updates" subtitle="Get the latest compliance news delivered to your inbox." navigate={navigate}>
-             <div className="max-w-xl mx-auto text-center">
-                 <div className="flex gap-4 mb-6">
-                     <input type="email" placeholder="Enter your email" className="flex-1 bg-obsidianNavy border border-deepDivider rounded-lg p-4 text-white focus:border-brightBlue outline-none" />
-                     <button className="bg-brightBlue hover:bg-blue-600 text-white font-bold px-8 rounded-lg shadow-lg">Subscribe</button>
-                 </div>
-                 <p className="text-sm text-steelGrey">No spam. Unsubscribe at any time.</p>
-             </div>
+        <PublicPageLayout 
+            title="FAQ." 
+            subtitle="Common questions about the Complimaxx platform, pricing, and AI engine."
+            navigate={navigate}
+        >
+            <div className="max-w-4xl mx-auto space-y-4">
+                {faqs.map((item, i) => (
+                    <div key={i} className="bg-obsidianNavy border border-white/5 rounded-[32px] overflow-hidden transition-all shadow-xl">
+                        <button 
+                            onClick={() => setOpenIdx(openIdx === i ? null : i)}
+                            className="w-full px-12 py-10 flex justify-between items-center text-left hover:bg-white/5 transition-colors"
+                        >
+                            <span className="text-lg font-black text-white uppercase tracking-tight">{item.q}</span>
+                            <div className={`transition-transform duration-300 ${openIdx === i ? 'rotate-180' : ''}`}>
+                                <ChevronDown size={24} className="text-brightBlue" />
+                            </div>
+                        </button>
+                        {openIdx === i && (
+                            <div className="px-12 pb-10 animate-fadeIn">
+                                <p className="text-steelGrey text-lg leading-relaxed font-medium border-t border-white/5 pt-8">{item.a}</p>
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
         </PublicPageLayout>
     );
 };

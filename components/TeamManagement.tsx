@@ -20,7 +20,7 @@ const TeamManagement: React.FC = () => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-white">Team Management</h2>
-          <p className="text-steelGrey text-sm">Samenwerking is momenteel beperkt tot deze lokale browser-sessie.</p>
+          <p className="text-steelGrey text-sm">Collaboration is currently limited to this local browser session.</p>
         </div>
         <button className="bg-brightBlue hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium flex items-center shadow-lg shadow-blue-500/20">
           <UserPlus size={18} className="mr-2" /> Invite User (Demo)
@@ -28,7 +28,7 @@ const TeamManagement: React.FC = () => {
       </div>
 
       <div className="bg-orange-500/10 border border-orange-500/30 p-4 rounded-xl text-orange-500 text-sm flex items-center">
-          <span className="mr-3">ℹ️</span> Offline Mode: Gegevens worden alleen in dit apparaat opgeslagen.
+          <span className="mr-3">ℹ️</span> Offline Mode: Data is only stored on this device.
       </div>
 
       <div className="bg-obsidianNavy border border-deepDivider rounded-xl overflow-hidden shadow-xl">

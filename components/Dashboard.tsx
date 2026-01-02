@@ -1,118 +1,149 @@
 
 import React from 'react';
-import { Plus, Shield, CheckCircle, AlertTriangle, FileText, Cloud, CloudOff, RefreshCcw, ArrowRight, Zap, Clock } from 'lucide-react';
-import { AppRoute } from '../types';
+import { Plus, Shield, CheckCircle, AlertTriangle, FileText, Cloud, CloudOff, Zap, Clock, TrendingUp, Layers, ArrowRight, Folder, UserCheck, Star } from 'lucide-react';
+import { AppRoute, AuditPackage } from '../types';
 import { isSupabaseConfigured } from '../services/supabaseClient';
 
 interface DashboardProps {
   navigate: (route: AppRoute) => void;
+  savedProjects: AuditPackage[];
+  profile: any;
+  onSelectProject: (project: AuditPackage) => void;
 }
 
-const StatCard = ({ label, value, icon: Icon, color, trend }: any) => (
-  <div className="bg-obsidianNavy border border-deepDivider rounded-xl p-6 shadow-lg hover:border-brightBlue/30 transition-all group">
-    <div className="flex justify-between items-start">
+const StatCard = ({ label, value, icon: Icon, color, trend, trendUp }: any) => (
+  <div className="bg-obsidianNavy border border-white/5 rounded-[32px] p-8 shadow-xl hover:border-brightBlue/30 transition-all group relative overflow-hidden">
+    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+       <Icon size={80} />
+    </div>
+    <div className="flex justify-between items-start relative z-10">
       <div>
-        <p className="text-steelGrey text-[10px] font-black uppercase tracking-[0.2em] mb-2">{label}</p>
-        <h3 className="text-3xl font-black text-white">{value}</h3>
+        <p className="text-steelGrey text-[10px] font-black uppercase tracking-[0.4em] mb-3">{label}</p>
+        <h3 className="text-4xl font-black text-white mb-2">{value}</h3>
       </div>
-      <div className={`p-3 rounded-lg bg-opacity-10 group-hover:scale-110 transition-transform ${color}`}>
+      <div className={`p-4 rounded-2xl bg-opacity-10 group-hover:scale-110 transition-transform ${color}`}>
         <Icon size={24} className={color.replace('bg-', 'text-')} />
       </div>
     </div>
-    <div className="mt-4 flex items-center text-xs text-steelGrey">
-      <span className="text-emerald-500 font-bold mr-1">{trend}</span> since last month
+    <div className="mt-6 flex items-center text-[10px] text-steelGrey font-black uppercase tracking-widest relative z-10">
+      <span className={`${trendUp ? 'text-emerald-500' : 'text-riskHigh'} mr-2 flex items-center`}>
+        {trendUp ? <TrendingUp size={12} className="mr-1"/> : <AlertTriangle size={12} className="mr-1"/>}
+        {trend}
+      </span> 
+      Update via Cloud
     </div>
   </div>
 );
 
-const Dashboard: React.FC<DashboardProps> = ({ navigate }) => {
+const Dashboard: React.FC<DashboardProps> = ({ navigate, savedProjects, profile, onSelectProject }) => {
+  const recentProjects = savedProjects.slice(0, 3);
+  const credits = profile?.credits_remaining ?? 0;
+  const isPro = profile?.is_pro ?? false;
+  const frameworkLimit = profile?.framework_limit ?? 2;
+
   return (
-    <div className="space-y-8 animate-fadeIn">
-      {/* Welcome Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-[#080C14] border border-deepDivider p-8 rounded-2xl shadow-xl relative overflow-hidden">
-        <div className="absolute right-0 top-0 h-full w-1/4 bg-brightBlue/5 skew-x-12 transform origin-bottom-right"></div>
+    <div className="space-y-10 animate-fadeIn font-sans pb-20">
+      
+      {/* HEADER HERO */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-10 bg-gradient-to-br from-obsidianNavy to-techBlack border border-white/5 p-12 rounded-[50px] shadow-2xl relative overflow-hidden">
+        <div className="absolute right-0 top-0 h-full w-1/3 bg-brightBlue/5 skew-x-12 transform origin-bottom-right"></div>
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-2">
-             <h1 className="text-3xl font-black text-white tracking-tight">Welcome, Compliance Hero</h1>
-             {isSupabaseConfigured ? (
-               <div className="flex items-center text-[10px] font-black text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 tracking-widest uppercase">
-                 <Cloud size={10} className="mr-1" /> LIVE SYNC
-               </div>
-             ) : (
-               <div className="flex items-center text-[10px] font-black text-riskHigh bg-riskHigh/10 px-2 py-0.5 rounded border border-riskHigh/20 tracking-widest uppercase">
-                 <CloudOff size={10} className="mr-1" /> LOCAL MODE
-               </div>
+          <div className="flex items-center gap-4 mb-4">
+             <h1 className="text-4xl font-black text-white tracking-tighter uppercase">Welkom, {profile?.first_name || 'Admin'}</h1>
+             <div className="flex items-center text-[9px] font-black text-emerald-500 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20 tracking-[0.4em] uppercase">
+                <Cloud size={10} className="mr-2" /> Cloud Synced
+             </div>
+             {isPro && (
+                <div className="flex items-center text-[9px] font-black text-yellow-500 bg-yellow-500/10 px-3 py-1.5 rounded-full border border-yellow-500/20 tracking-[0.4em] uppercase">
+                    <Star size={10} className="mr-2" /> Enterprise
+                </div>
              )}
           </div>
-          <p className="text-steelGrey text-sm font-medium">Your audit environment is <span className="text-emerald-500 font-bold">Stable</span>. 12 tasks pending for ISO 27001.</p>
+          <p className="text-steelGrey text-sm font-medium">U heeft <span className="text-brightBlue font-black">{credits} credits</span> resterend voor deze periode.</p>
         </div>
-        <button 
-          onClick={() => navigate(AppRoute.PROJECT_WIZARD)}
-          className="bg-brightBlue hover:bg-blue-600 text-white px-8 py-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-xl shadow-brightBlue/20 transition-all hover:scale-105 active:scale-95 flex items-center relative z-10"
-        >
-          <Plus size={20} className="mr-2" />
-          Start New Audit
-        </button>
+        
+        <div className="flex items-center gap-4 relative z-10">
+          <button 
+            onClick={() => navigate(AppRoute.PROJECT_WIZARD)}
+            className="bg-brightBlue hover:bg-blue-600 text-white px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.4em] shadow-[0_20px_40px_rgba(0,140,255,0.2)] transition-all hover:scale-105 active:scale-95 flex items-center"
+          >
+            <Plus size={20} className="mr-3" />
+            Nieuw Project
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* STATS */}
-          <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-              <StatCard label="Audit Readiness" value="84%" icon={Shield} color="bg-brightBlue" trend="+4%" />
-              <StatCard label="Active Gaps" value="8" icon={AlertTriangle} color="bg-riskHigh" trend="-3" />
-              <StatCard label="Evidence Health" value="92%" icon={CheckCircle} color="bg-emerald-500" trend="+12%" />
-              <StatCard label="Pending Tasks" value="14" icon={FileText} color="bg-purple-500" trend="-2" />
-          </div>
+      {/* STATS GRID */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <StatCard label="Credits" value={credits.toString()} icon={Zap} color="bg-yellow-500" trend="Maandelijks" trendUp={true} />
+          <StatCard label="Limiet" value={`${frameworkLimit} FWS`} icon={Layers} color="bg-purple-500" trend="Frameworks" trendUp={true} />
+          <StatCard label="Hygiëne" value="92%" icon={CheckCircle} color="bg-emerald-500" trend="+12.0%" trendUp={true} />
+          <StatCard label="Projecten" value={savedProjects.length.toString()} icon={FileText} color="bg-brightBlue" trend="Totaal" trendUp={true} />
+      </div>
 
-          {/* CRITICAL PATH WIDGET */}
-          <div className="bg-gradient-to-br from-obsidianNavy to-[#121826] border border-brightBlue/30 rounded-2xl p-6 shadow-2xl relative group">
-              <div className="absolute top-0 left-0 w-1 h-full bg-brightBlue"></div>
-              <h3 className="text-xs font-black text-brightBlue uppercase tracking-widest mb-6 flex items-center">
-                  <Zap size={14} className="mr-2 fill-current" /> Critical Path Next Step
-              </h3>
-              <div className="space-y-4">
-                  <div className="p-4 bg-white/5 rounded-xl border border-white/5">
-                      <div className="flex items-center gap-2 mb-2 text-[10px] font-black text-steelGrey uppercase tracking-widest">
-                          <Clock size={12} /> Due in 2 days
-                      </div>
-                      <h4 className="text-white font-bold text-lg mb-2">Review Access Logs for SOC 2</h4>
-                      <p className="text-xs text-steelGrey leading-relaxed mb-4 line-clamp-2">Validate that all admin access logs from the last quarter have been reviewed and signed off by the CISO.</p>
-                      <button onClick={() => navigate(AppRoute.CHECKLIST)} className="w-full bg-white text-techBlack py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all hover:bg-brightBlue hover:text-white">Open Task</button>
-                  </div>
-                  <div className="text-[10px] text-steelGrey font-bold text-center italic opacity-40">Generated by Compliance AI engine</div>
+      {/* MAIN CONTENT SPLIT */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Recent Projects */}
+          <div className="lg:col-span-2 bg-obsidianNavy border border-white/5 rounded-[40px] p-12">
+              <div className="flex justify-between items-center mb-10">
+                 <h3 className="text-xs font-black text-brightBlue uppercase tracking-[0.4em] flex items-center">
+                    <Clock size={16} className="mr-3" /> Recente Projecten
+                 </h3>
+                 <button 
+                  onClick={() => navigate(AppRoute.OUTPUT_VIEWER)}
+                  className="text-[10px] font-black text-steelGrey uppercase tracking-widest hover:text-white transition-colors"
+                 >
+                   Bekijk Alles
+                 </button>
               </div>
-          </div>
-      </div>
-
-      {/* RECENT PROJECTS SIMULATED */}
-      <div>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-black text-white uppercase tracking-widest opacity-40">Recent Workspace Activity</h2>
-          <button onClick={() => navigate(AppRoute.OUTPUT_VIEWER)} className="text-brightBlue text-xs font-black uppercase tracking-widest hover:underline">View All Projects</button>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[
-                { title: 'ISO 27001 ISMS Setup', status: 'In Progress', frameworks: ['ISO 27001', 'SOC 2'], score: 65 },
-                { title: 'NIS2 Directive Mapping', status: 'Completed', frameworks: ['NIS2', 'ISO 27001'], score: 98 }
-            ].map((p, i) => (
-                <div key={i} className="bg-obsidianNavy border border-deepDivider rounded-2xl p-6 hover:border-brightBlue transition-all cursor-pointer group">
-                    <div className="flex justify-between mb-4">
-                        <div className="p-2 bg-brightBlue/10 text-brightBlue rounded-lg group-hover:bg-brightBlue group-hover:text-white transition-colors">
-                            <FileText size={20} />
-                        </div>
-                        <div className="text-right">
-                            <div className="text-[10px] text-steelGrey font-black uppercase tracking-widest mb-1">Readiness Score</div>
-                            <div className={`text-xl font-black ${p.score > 80 ? 'text-emerald-500' : 'text-brightBlue'}`}>{p.score}%</div>
-                        </div>
-                    </div>
-                    <h4 className="text-lg font-bold text-white mb-1">{p.title}</h4>
-                    <p className="text-xs text-steelGrey mb-4">{p.frameworks.join(' • ')}</p>
-                    <div className="w-full bg-deepDivider h-1.5 rounded-full overflow-hidden">
-                        <div className={`h-full ${p.score > 80 ? 'bg-emerald-500' : 'bg-brightBlue'}`} style={{ width: `${p.score}%` }}></div>
-                    </div>
+              
+              {recentProjects.length === 0 ? (
+                <div className="py-20 text-center opacity-40">
+                   <Folder size={48} className="mx-auto mb-4" />
+                   <p className="text-xs font-black uppercase tracking-widest">Nog geen projecten in de cloud.</p>
                 </div>
-            ))}
-        </div>
+              ) : (
+                <div className="space-y-6">
+                    {recentProjects.map((p, i) => (
+                      <div 
+                        key={p.id} 
+                        onClick={() => onSelectProject(p)}
+                        className="flex items-center justify-between p-6 bg-techBlack/40 rounded-3xl border border-white/5 hover:border-brightBlue/30 transition-all group cursor-pointer"
+                      >
+                        <div className="flex items-center gap-6">
+                            <div className="w-14 h-14 rounded-2xl bg-white/5 text-brightBlue flex items-center justify-center group-hover:scale-110 transition-transform">
+                              <FileText size={24} />
+                            </div>
+                            <div>
+                              <div className="text-sm font-black text-white uppercase tracking-tight mb-1">{p.project_title || "Naamloos"}</div>
+                              <div className="text-[10px] text-steelGrey font-bold uppercase tracking-widest">{p.framework_mapping.length} Frameworks • Score: {p.audit_score?.total_score}%</div>
+                            </div>
+                        </div>
+                        <button className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-steelGrey group-hover:bg-brightBlue group-hover:text-white transition-all">
+                            <ArrowRight size={16} />
+                        </button>
+                      </div>
+                    ))}
+                </div>
+              )}
+          </div>
+
+          {/* AI Advisor Card */}
+          <div className="bg-gradient-to-br from-[#1C2533] to-techBlack border border-brightBlue/20 rounded-[40px] p-12 flex flex-col items-center justify-center text-center">
+              <div className="w-20 h-20 rounded-full bg-brightBlue/10 flex items-center justify-center mb-8 relative">
+                 <UserCheck size={40} className="text-brightBlue" />
+                 <div className="absolute inset-0 bg-brightBlue rounded-full blur-2xl opacity-20"></div>
+              </div>
+              <h4 className="text-white font-black uppercase tracking-[0.3em] text-sm mb-4">Cloud Status</h4>
+              <p className="text-xs text-steelGrey leading-loose mb-10 font-medium">U bent ingelogd als <span className="text-brightBlue font-black">{profile?.email}</span>. Alle wijzigingen in checklists en gaps worden real-time opgeslagen.</p>
+              <button 
+                onClick={() => navigate(AppRoute.SETTINGS)} 
+                className="bg-white text-techBlack hover:bg-brightBlue hover:text-white w-full py-5 rounded-2xl text-[10px] font-black uppercase tracking-[0.4em] transition-all shadow-xl"
+              >
+                Account Instellingen
+              </button>
+          </div>
       </div>
     </div>
   );
