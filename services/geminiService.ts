@@ -1,16 +1,8 @@
 
-// @google/genai guidelines:
-// Always use const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
-// Use 'gemini-3-pro-preview' for complex text tasks.
-// Always use import {GoogleGenAI} from "@google/genai";
-// Do not use SchemaType; Correct Type.
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { AuditPackage } from "../types";
 
-// Schema Definitions matching the TypeScript interfaces
-// Note: Schema object follows standard structure but we use any or infer type for the variable 
-// to avoid importing internal types not explicitly allowed by the guidelines.
+// Enhanced Schema with stricter requirements for AI stability
 const auditPackageSchema: any = {
   type: Type.OBJECT,
   properties: {
@@ -56,10 +48,7 @@ const auditPackageSchema: any = {
               qa: { type: Type.STRING },
               it: { type: Type.STRING },
               analyst: { type: Type.STRING },
-              audit: { type: Type.STRING },
-              role1: { type: Type.STRING },
-              role2: { type: Type.STRING },
-              role3: { type: Type.STRING }
+              audit: { type: Type.STRING }
             },
           },
         },
@@ -226,51 +215,57 @@ export const generateAuditPackage = async (
   processDescription: string,
   frameworks: string[]
 ): Promise<AuditPackage> => {
-  // Fix: Strictly following initialization guidelines for GoogleGenAI with named parameter and direct process.env.API_KEY usage
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-  const prompt = `
-    You are an expert Chief Audit Executive (CAE) and Enterprise Compliance Architect.
-    Generate a professional audit-grade package for: "${processName}".
+  const systemInstruction = `You are a world-class Chief Audit Executive and GRC Architect.
+  Your task is to generate a comprehensive, enterprise-grade audit package in JSON format.
+  Use formal, professional language. 
+  Ensure all IDs (R-01, C-01, etc.) are consistently cross-referenced across risks, controls, and test plans.
+  RACI must have exactly 1 'A' (Accountable) per step.`;
+
+  const prompt = `Generate a full audit package for the process: "${processName}".
     
-    FRAMEWORKS: ${frameworks.join(', ')}.
-    CONTEXT: ${processDescription}
+    FRAMEWORKS TO ALIGN WITH: ${frameworks.join(', ')}.
+    BUSINESS CONTEXT: ${processDescription}
 
-    OUTPUT SPECIFICATIONS:
-    1. Process Flow: Granular steps (5-8) with risk hotspots.
-    2. RACI Matrix: Strictly 1 Accountable per step.
-    3. Risks: 8-10 high-impact compliance/operational risks.
-    4. Controls: 10-15 strong controls mapped to Framework sections.
-    5. Test Plans: Detailed audit steps for Key Controls.
-    6. Evidence: Checklist of artifacts (logs, policies, screenshots).
-
-    Language must be formal, precise, and professional. Ensure all IDs (C01, R01, E01) are cross-referenced correctly.
+    REQUIRED COMPONENTS:
+    1. process_flow: 5-7 logical steps with risks and decision points.
+    2. raci_matrix: Responsibility assignment for each step.
+    3. risks: Inherent vs Residual ratings.
+    4. controls: Specific, verifiable controls mapped to frameworks.
+    5. key_controls: Critical controls that require testing.
+    6. test_plans: How to audit the key controls.
+    7. evidence_checklist: Specific artifacts needed (logs, screenshots, policies).
+    8. audit_score: Benchmark the current design readiness.
+    9. framework_mapping: Map controls to specific framework articles/references.
   `;
 
   try {
-    // Guidelines: Use 'gemini-3-pro-preview' for complex text tasks.
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
+        systemInstruction,
         responseMimeType: 'application/json',
         responseSchema: auditPackageSchema,
-        thinkingConfig: { thinkingBudget: 4096 },
         temperature: 0.1, 
       },
     });
 
-    // Guidelines: Access response.text directly as a property.
     const text = response.text;
-    if (!text) throw new Error("No response from AI engine.");
+    if (!text) throw new Error("The AI engine returned an empty response.");
 
-    const parsedData = JSON.parse(text) as AuditPackage;
-    return parsedData;
+    try {
+        return JSON.parse(text) as AuditPackage;
+    } catch (parseError) {
+        console.error("JSON Parsing Error:", text);
+        throw new Error("AI output was not a valid JSON. Please try again with a simpler description.");
+    }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini API Error:", error);
-    if (error instanceof SyntaxError) {
-        throw new Error("Analysis engine encountered a structural error. Try a simpler process description.");
+    if (error.message?.includes('fetch')) {
+      throw new Error("Network error connecting to AI. Please check your connection.");
     }
     throw error;
   }

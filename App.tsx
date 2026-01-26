@@ -23,13 +23,13 @@ import {
   FAQPage, 
   GetStartedPage
 } from './components/PublicInfoPages';
-import { AppRoute, AuditPackage } from './types';
+import { AppRoute, AuditPackage, UserProfile, ChecklistItem, Gap } from './types';
 import { storageService } from './services/storageService';
-import { supabase, isSupabaseConfigured } from './services/supabaseClient';
+import { supabase } from './services/supabaseClient';
 
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [currentRoute, setCurrentRoute] = useState<AppRoute>(AppRoute.LANDING);
   const [activeProject, setActiveProject] = useState<AuditPackage | null>(null);
   const [savedProjects, setSavedProjects] = useState<AuditPackage[]>([]);
@@ -43,18 +43,22 @@ const App: React.FC = () => {
       
       if (currentSession) {
         await loadUserData(currentSession.user.id);
+      } else {
+        setLoading(false);
       }
 
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
         setSession(session);
-        if (session) await loadUserData(session.user.id);
-        else {
+        if (session) {
+          await loadUserData(session.user.id);
+        } else {
           setProfile(null);
           setSavedProjects([]);
+          setCurrentRoute(AppRoute.LANDING);
+          setLoading(false);
         }
       });
 
-      setLoading(false);
       return () => subscription.unsubscribe();
     };
 
@@ -62,21 +66,29 @@ const App: React.FC = () => {
   }, []);
 
   const loadUserData = async (userId: string) => {
+    setLoading(true);
     try {
-      const projects = await storageService.getProjects(userId);
-      setSavedProjects(projects);
+      // Parallel laden voor snelheid
+      const [projects, profileResult] = await Promise.all([
+        storageService.getProjects(userId),
+        supabase.from('profiles').select('*').eq('id', userId).single()
+      ]);
 
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      setSavedProjects(projects);
       
-      if (profileData) {
-        setProfile(profileData);
+      if (profileResult.data) {
+        setProfile(profileResult.data as UserProfile);
+      } else {
+        // Als profiel er nog niet is (door trigger delay), probeer het na 2 seconden nog eens
+        setTimeout(async () => {
+          const { data: retryData } = await supabase.from('profiles').select('*').eq('id', userId).single();
+          if (retryData) setProfile(retryData as UserProfile);
+        }, 2000);
       }
     } catch (err) {
-      console.error('Fout bij laden user data:', err);
+      console.error('Error loading user data:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -88,8 +100,36 @@ const App: React.FC = () => {
   const handleAuditGenerationComplete = async (data: AuditPackage) => {
     setIsSyncing(true);
     const userId = session?.user?.id;
-    // Sla direct op in de cloud na generatie
-    const saved = await storageService.saveProject(data, userId);
+    
+    const initialChecklist: ChecklistItem[] = data.controls.map((c, i) => ({
+        id: `T-${Date.now()}-${i}`,
+        requirement: `${c.title} Implementation`,
+        description: c.description,
+        status: 'Not Started',
+        assignedTo: c.owner || 'Process Owner',
+        dueDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+        framework: c.framework_mapping[0]?.framework || 'General',
+        category: 'Control',
+        priority: i < 3 ? 'High' : 'Medium',
+        difficulty: 'Medium',
+        recurrence: 'Yearly',
+        evidenceFiles: [],
+        evidenceNotes: '',
+        linkedControl: c.id
+    }));
+
+    const enrichedData: AuditPackage = {
+        ...data,
+        checklist: initialChecklist,
+        gaps: [],
+        audit_meta: {
+            last_audit_date: '-',
+            next_audit_date: new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0],
+            frequency: 'Annual'
+        }
+    };
+
+    const saved = await storageService.saveProject(enrichedData, userId);
     setActiveProject(saved);
     await loadUserData(userId);
     setIsSyncing(false);
@@ -103,10 +143,9 @@ const App: React.FC = () => {
     try {
       const saved = await storageService.saveProject(data, userId);
       setActiveProject(saved);
-      // Update de lokale lijst zodat het dashboard klopt
       setSavedProjects(prev => prev.map(p => p.id === saved.id ? saved : p));
     } catch (err) {
-      console.error('Opslaan mislukt:', err);
+      console.error('Save failed:', err);
     } finally {
       setIsSyncing(false);
     }
@@ -115,41 +154,36 @@ const App: React.FC = () => {
   const handleUpdateProject = async (updates: Partial<AuditPackage>) => {
     if (activeProject) {
       const newData = { ...activeProject, ...updates };
-      // Lokale staat direct updaten voor snelheid
       setActiveProject(newData);
-      // Cloud sync op de achtergrond
       await handleSaveProject(newData);
     }
   };
 
   const handleAuthAction = async (email: string, pass: string, isSignup: boolean, extra?: any) => {
     let authResult;
+    setLoading(true);
     if (isSignup) {
       authResult = await supabase.auth.signUp({ 
         email, 
         password: pass,
         options: { data: { first_name: extra?.firstName, last_name: extra?.lastName } }
       });
-      
-      if (authResult.error) throw authResult.error;
-
-      if (authResult.data.user) {
-        await supabase.from('profiles').insert([{
-          id: authResult.data.user.id,
-          first_name: extra?.firstName,
-          last_name: extra?.lastName,
-          email: email,
-          is_pro: false,
-          framework_limit: 2,
-          credits_remaining: 15
-        }]);
+      if (authResult.error) {
+        setLoading(false);
+        throw authResult.error;
       }
     } else {
       authResult = await supabase.auth.signInWithPassword({ email, password: pass });
-      if (authResult.error) throw authResult.error;
+      if (authResult.error) {
+        setLoading(false);
+        throw authResult.error;
+      }
     }
 
-    navigate(AppRoute.DASHBOARD);
+    if (authResult.data.user) {
+      await loadUserData(authResult.data.user.id);
+      navigate(AppRoute.DASHBOARD);
+    }
     return authResult.data;
   };
 
@@ -163,8 +197,13 @@ const App: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-techBlack flex flex-col items-center justify-center text-white p-6">
-        <div className="w-12 h-12 border-4 border-brightBlue border-t-transparent rounded-full animate-spin mb-6"></div>
-        <h2 className="text-lg font-bold">Complimaxx Cloud Initialiseren...</h2>
+        <div className="relative mb-8">
+            <div className="w-16 h-16 border-4 border-brightBlue border-t-transparent rounded-full animate-spin"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-2 h-2 bg-brightBlue rounded-full animate-pulse"></div>
+            </div>
+        </div>
+        <h2 className="text-sm font-black tracking-[0.5em] text-steelGrey uppercase animate-pulse">Syncing Workspace</h2>
       </div>
     );
   }
@@ -212,24 +251,55 @@ const App: React.FC = () => {
           onSelectProject={(p) => { setActiveProject(p); navigate(AppRoute.OUTPUT_VIEWER); }} 
         />
       )}
-      {currentRoute === AppRoute.PROJECT_WIZARD && <ProjectWorkspace onComplete={handleAuditGenerationComplete} navigate={navigate} />}
+      {currentRoute === AppRoute.PROJECT_WIZARD && (
+        <ProjectWorkspace 
+          onComplete={handleAuditGenerationComplete} 
+          navigate={navigate} 
+          profile={profile} 
+        />
+      )}
       {currentRoute === AppRoute.OUTPUT_VIEWER && (
         <OutputViewer 
           data={activeProject} 
           savedProjects={savedProjects}
           onSave={handleSaveProject}
-          onDelete={async (id) => { await storageService.deleteProject(id); loadUserData(session.user.id); setActiveProject(null); }}
+          onDelete={async (id) => { 
+            await storageService.deleteProject(id); 
+            await loadUserData(session.user.id); 
+            setActiveProject(null); 
+          }}
           onBack={() => { setActiveProject(null); navigate(AppRoute.DASHBOARD); }}
           onSelectProject={(d) => { setActiveProject(d); }}
           onNavigateToChecklist={() => navigate(AppRoute.CHECKLIST)}
           navigate={navigate}
         />
       )}
-      {currentRoute === AppRoute.CHECKLIST && <ChecklistMode data={activeProject} navigate={navigate} onUpdate={(checklist) => handleUpdateProject({ checklist })} />}
-      {currentRoute === AppRoute.GAP_TRACKING && <GapTracking data={activeProject} navigate={navigate} onUpdate={(gaps) => handleUpdateProject({ gaps })} />}
-      {currentRoute === AppRoute.RENEWAL && <RenewalMode data={activeProject} navigate={navigate} onUpdate={(audit_meta) => handleUpdateProject({ audit_meta })} onChecklistUpdate={(checklist) => handleUpdateProject({ checklist })} />}
-      {currentRoute === AppRoute.TEAM && <TeamManagement />}
-      {currentRoute === AppRoute.SETTINGS && <Settings />}
+      {currentRoute === AppRoute.CHECKLIST && (
+          <ChecklistMode 
+            data={activeProject} 
+            navigate={navigate} 
+            onUpdate={(checklist) => handleUpdateProject({ checklist })} 
+          />
+      )}
+      {currentRoute === AppRoute.GAP_TRACKING && (
+          <GapTracking 
+            data={activeProject} 
+            navigate={navigate} 
+            onUpdate={(gaps) => handleUpdateProject({ gaps })} 
+          />
+      )}
+      {currentRoute === AppRoute.RENEWAL && (
+        <RenewalMode 
+          data={activeProject} 
+          navigate={navigate} 
+          profile={profile}
+          onUpdate={(audit_meta) => handleUpdateProject({ audit_meta })} 
+          onChecklistUpdate={(checklist) => handleUpdateProject({ checklist })} 
+          onRefreshProfile={() => loadUserData(session.user.id)}
+        />
+      )}
+      {currentRoute === AppRoute.TEAM && <TeamManagement profile={profile} navigate={navigate} />}
+      {currentRoute === AppRoute.SETTINGS && <Settings profile={profile} onRefresh={() => loadUserData(session.user.id)} />}
     </Layout>
   );
 };

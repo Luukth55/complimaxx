@@ -185,7 +185,6 @@ export enum AppRoute {
   COOKIES = 'cookies',
   DPA = 'dpa',
   GET_STARTED = 'get_started',
-  // Fix: Added missing HELP route
   HELP = 'help'
 }
 
@@ -196,4 +195,23 @@ export interface TeamMember {
   role: 'Admin' | 'Editor' | 'Viewer';
   status: 'Active' | 'Pending';
   lastActive: string;
+}
+
+export type UserPlan = 'Essentials' | 'Pro' | 'Enterprise';
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  company_name: string;
+  industry: string;
+  role: string;
+  plan: UserPlan;
+  is_pro: boolean;
+  framework_limit: number;
+  user_limit: number;
+  credits_total: number;
+  credits_remaining: number;
+  updated_at: string;
 }

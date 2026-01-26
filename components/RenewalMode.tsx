@@ -1,19 +1,23 @@
 
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Zap, Calendar, History, Activity, AlertTriangle, Loader2, ListTodo, ArrowRight, ShieldCheck } from 'lucide-react';
-import { AuditPackage, ChecklistItem } from '../types';
+import { RefreshCw, Zap, Calendar, History, Activity, AlertTriangle, Loader2, ListTodo, ArrowRight, ShieldCheck, Lock } from 'lucide-react';
+import { AuditPackage, ChecklistItem, UserProfile } from '../types';
+import { storageService } from '../services/storageService';
 
 interface RenewalModeProps {
   data: AuditPackage | null;
   navigate: (route: any) => void;
   onUpdate?: (meta: any) => void;
   onChecklistUpdate?: (items: ChecklistItem[]) => void;
+  profile: UserProfile | null;
+  onRefreshProfile: () => void;
 }
 
-const RenewalMode: React.FC<RenewalModeProps> = ({ data, navigate, onChecklistUpdate }) => {
+const RenewalMode: React.FC<RenewalModeProps> = ({ data, navigate, onChecklistUpdate, profile, onRefreshProfile }) => {
   const [isScanning, setIsScanning] = useState(false);
   const [scanComplete, setScanComplete] = useState(false);
   const [daysRemaining, setDaysRemaining] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (data?.audit_meta?.next_audit_date) {
@@ -23,14 +27,32 @@ const RenewalMode: React.FC<RenewalModeProps> = ({ data, navigate, onChecklistUp
     }
   }, [data]);
 
-  const kickoffNewCycle = () => {
-    if (!data || !onChecklistUpdate) return;
+  const kickoffNewCycle = async () => {
+    if (!data || !onChecklistUpdate || !profile) return;
     
+    const isEnterprise = profile.plan === 'Enterprise';
+    if (!isEnterprise && profile.credits_remaining <= 0) {
+      setError("Not enough AI credits to start a new cycle. Upgrade your plan.");
+      return;
+    }
+
+    const confirmed = confirm(`Starting a new audit cycle will consume 1 AI credit. Continue?`);
+    if (!confirmed) return;
+
+    setError(null);
+    const success = await storageService.deductCredit(profile.id);
+    if (!success && !isEnterprise) {
+      setError("Credit deduction failed.");
+      return;
+    }
+
+    onRefreshProfile();
+
     // Create specific renewal tasks
     const renewalTasks: ChecklistItem[] = [
         { 
           id: `REN-${Date.now()}-1`, 
-          requirement: 'Re-evaluate Process Flow', 
+          requirement: 'Re-evaluate Process Flow (AI Refreshed)', 
           status: 'Not Started', 
           assignedTo: 'Process Owner', 
           dueDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0], 
@@ -43,7 +65,7 @@ const RenewalMode: React.FC<RenewalModeProps> = ({ data, navigate, onChecklistUp
         },
         { 
           id: `REN-${Date.now()}-2`, 
-          requirement: 'Evidence Recertification', 
+          requirement: 'Evidence Verification Audit', 
           status: 'Not Started', 
           assignedTo: 'Compliance Officer', 
           dueDate: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0], 
@@ -59,8 +81,6 @@ const RenewalMode: React.FC<RenewalModeProps> = ({ data, navigate, onChecklistUp
     const currentChecklist = data.checklist || [];
     onChecklistUpdate([...renewalTasks, ...currentChecklist]);
     
-    // Show a short confirmation and navigate to checklist
-    alert("New Audit cycle started. 2 Renewal tasks have been added to your checklist.");
     navigate('checklist');
   };
 
@@ -84,7 +104,8 @@ const RenewalMode: React.FC<RenewalModeProps> = ({ data, navigate, onChecklistUp
               </div>
               <div>
                   <h2 className="text-3xl font-black text-white mb-2 uppercase tracking-tighter">Audit Lifecycle</h2>
-                  <p className="text-steelGrey font-medium">Next external audit scheduled for <span className="text-white font-bold">{data.audit_meta?.next_audit_date || 'Not set yet'}</span></p>
+                  <p className="text-steelGrey font-medium">Next audit scheduled for <span className="text-white font-bold">{data.audit_meta?.next_audit_date || 'Not set'}</span></p>
+                  {error && <p className="text-riskHigh text-[10px] font-black uppercase mt-2">{error}</p>}
               </div>
           </div>
           <div className="flex items-center gap-6 relative z-10">
@@ -92,9 +113,16 @@ const RenewalMode: React.FC<RenewalModeProps> = ({ data, navigate, onChecklistUp
                  <div className="text-[10px] font-black text-steelGrey uppercase tracking-widest mb-1">Days left</div>
                  <div className="text-4xl font-black text-white">{daysRemaining}</div>
              </div>
-             <button onClick={kickoffNewCycle} className="bg-brightBlue hover:bg-blue-600 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.4em] shadow-xl transition-all hover:scale-105 active:scale-95 flex items-center">
-                <Zap size={20} className="mr-3" /> Start New Cycle
-             </button>
+             
+             {profile?.credits_remaining === 0 && profile.plan !== 'Enterprise' ? (
+                <button onClick={() => navigate('settings')} className="bg-riskHigh text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.4em] shadow-xl flex items-center gap-3">
+                    <Lock size={18}/> Upgrade to Renew
+                </button>
+             ) : (
+                <button onClick={kickoffNewCycle} className="bg-brightBlue hover:bg-blue-600 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.4em] shadow-xl transition-all hover:scale-105 active:scale-95 flex items-center">
+                    <Zap size={20} className="mr-3" /> Start New Cycle (1 Credit)
+                </button>
+             )}
           </div>
       </div>
 
@@ -128,38 +156,34 @@ const RenewalMode: React.FC<RenewalModeProps> = ({ data, navigate, onChecklistUp
 
           <div className="bg-obsidianNavy border border-deepDivider rounded-3xl p-8 shadow-xl flex flex-col">
               <div className="flex justify-between items-center mb-8">
-                  <h3 className="font-black text-white text-sm uppercase tracking-widest">Drift Analysis</h3>
+                  <h3 className="font-black text-white text-sm uppercase tracking-widest">Compliance Decay</h3>
                   <button onClick={runDriftAnalysis} className="p-2 bg-white/5 rounded-lg text-brightBlue hover:bg-brightBlue hover:text-white transition-all"><RefreshCw size={16}/></button>
               </div>
               
               {isScanning ? (
                   <div className="flex-1 flex flex-col items-center justify-center py-10">
                       <Loader2 size={40} className="text-brightBlue animate-spin mb-4" />
-                      <p className="text-[10px] font-black text-steelGrey uppercase tracking-widest">Scanning for staleness...</p>
+                      <p className="text-[10px] font-black text-steelGrey uppercase tracking-widest">Analyzing delta...</p>
                   </div>
               ) : scanComplete ? (
                   <div className="space-y-8 animate-fadeIn">
                       <div className="p-6 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-center">
                           <div className="text-4xl font-black text-emerald-500 mb-2">94%</div>
-                          <div className="text-[10px] text-steelGrey font-black uppercase tracking-widest">Consistency Score</div>
+                          <div className="text-[10px] text-steelGrey font-black uppercase tracking-widest">Health Index</div>
                       </div>
                       <div className="space-y-3">
-                          <p className="text-xs text-steelGrey leading-relaxed font-medium">Your evidence is up-to-date. Minimal drift detected since last update.</p>
+                          <p className="text-xs text-steelGrey leading-relaxed font-medium">Controls are performing within expected deviation. No critical drift found.</p>
                           <div className="flex items-center gap-2 text-emerald-500 text-[10px] font-black uppercase tracking-widest">
-                              <ShieldCheck size={14} /> Audit Ready
+                              <ShieldCheck size={14} /> Low Risk
                           </div>
                       </div>
                   </div>
               ) : (
                   <div className="flex-1 flex flex-col items-center justify-center py-10 opacity-30">
                       <Activity size={64} className="text-steelGrey mb-4" />
-                      <p className="text-xs text-center font-bold text-steelGrey uppercase tracking-widest">Start scan to measure<br/>compliance decay</p>
+                      <p className="text-xs text-center font-bold text-steelGrey uppercase tracking-widest">Start scan to measure<br/>drift since last audit</p>
                   </div>
               )}
-
-              <div className="mt-auto pt-8 border-t border-deepDivider">
-                  <p className="text-[10px] text-steelGrey italic leading-relaxed">Drift analysis examines how long ago controls were validated and if linked evidence is still valid.</p>
-              </div>
           </div>
       </div>
     </div>
