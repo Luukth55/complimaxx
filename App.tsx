@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Component, ErrorInfo, ReactNode } from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import Layout from './components/Layout';
 import LandingPage from './components/LandingPage';
@@ -17,147 +17,236 @@ import {
   SecurityPage, LegalPage, HelpCenterPage, TutorialsPage, 
   FAQPage, GetStartedPage
 } from './components/PublicInfoPages';
-import { AppRoute, AuditPackage, UserProfile, ChecklistItem } from './types';
-import { storageService } from './services/storageService';
+import { AppRoute, AuditPackage, UserProfile } from './types';
 import { supabase } from './services/supabaseClient';
+import { storageService } from './services/storageService';
 
-// Ensure global process object exists for browser compatibility
-if (typeof (window as any).process === 'undefined') {
-  (window as any).process = { env: {} };
+// Error Boundary to catch runtime errors in the workspace
+class ErrorBoundary extends Component<{children: ReactNode}, {hasError: boolean, error: Error | null}> {
+  constructor(props: {children: ReactNode}) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("Uncaught error:", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-techBlack text-white flex items-center justify-center p-8">
+          <div className="bg-obsidianNavy border border-riskHigh/30 p-12 rounded-[40px] max-w-xl text-center shadow-2xl">
+            <AlertCircle size={64} className="text-riskHigh mx-auto mb-8" />
+            <h1 className="text-3xl font-black mb-4 uppercase tracking-tighter">System Error</h1>
+            <p className="text-steelGrey mb-8 leading-relaxed">The neural workspace encountered a critical error. This session has been isolated to prevent data corruption.</p>
+            <div className="bg-black/40 p-4 rounded-xl text-left text-xs font-mono text-riskHigh mb-8 overflow-auto max-h-40 border border-white/5">
+              {this.state.error?.message}
+            </div>
+            <button onClick={() => window.location.reload()} className="bg-brightBlue hover:bg-blue-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.4em] shadow-lg transition-all">
+              Re-initialize Session
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 const App: React.FC = () => {
-  const [session, setSession] = useState<any>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [currentRoute, setCurrentRoute] = useState<AppRoute>(AppRoute.LANDING);
-  const [activeProject, setActiveProject] = useState<AuditPackage | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [currentProject, setCurrentProject] = useState<AuditPackage | null>(null);
   const [savedProjects, setSavedProjects] = useState<AuditPackage[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [globalError, setGlobalError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const loadUserData = useCallback(async (userId: string) => {
+  // Sync user profile from database
+  const refreshProfile = useCallback(async (userId: string) => {
     try {
-      const [projects, profileResult] = await Promise.all([
-        storageService.getProjects(userId),
-        supabase.from('profiles').select('*').eq('id', userId).single()
-      ]);
-
-      setSavedProjects(projects);
-      if (profileResult.data) {
-        setProfile(profileResult.data as UserProfile);
-      }
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+      if (error) throw error;
+      setUserProfile(data);
     } catch (err) {
-      console.error('Error loading data:', err);
-    } finally {
-      setLoading(false);
+      console.error("Profile refresh failed:", err);
     }
   }, []);
 
+  // Fetch projects from storage service
+  const fetchProjects = useCallback(async (userId: string) => {
+    setIsSyncing(true);
+    try {
+      const projects = await storageService.getProjects(userId);
+      setSavedProjects(projects);
+    } catch (err) {
+      console.error("Project fetch failed:", err);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, []);
+
+  // Initialize Auth state and subscribe to changes
   useEffect(() => {
-    const init = async () => {
-      try {
-        const { data: { session: cur } } = await supabase.auth.getSession();
-        setSession(cur);
-        if (cur) await loadUserData(cur.user.id);
-        else setLoading(false);
-
-        supabase.auth.onAuthStateChange(async (_event, session) => {
-          setSession(session);
-          if (session) await loadUserData(session.user.id);
-          else {
-            setProfile(null);
-            setSavedProjects([]);
-            setLoading(false);
-          }
-        });
-      } catch (e) {
-        setGlobalError("Connection to security layer failed. Refreshing...");
-        setLoading(false);
+    const initAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setIsLoggedIn(true);
+        await refreshProfile(session.user.id);
+        await fetchProjects(session.user.id);
+        setCurrentRoute(AppRoute.DASHBOARD);
       }
+      setIsLoading(false);
     };
-    init();
-  }, [loadUserData]);
 
-  const navigate = (route: AppRoute) => {
+    initAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session) {
+        setIsLoggedIn(true);
+        await refreshProfile(session.user.id);
+        await fetchProjects(session.user.id);
+        if (currentRoute === AppRoute.LANDING || currentRoute === AppRoute.LOGIN) {
+          setCurrentRoute(AppRoute.DASHBOARD);
+        }
+      } else {
+        setIsLoggedIn(false);
+        setUserProfile(null);
+        setSavedProjects([]);
+        setCurrentProject(null);
+        setCurrentRoute(AppRoute.LANDING);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [refreshProfile, fetchProjects]);
+
+  // Centralized navigation handler
+  const handleNavigate = (route: AppRoute) => {
     setCurrentRoute(route);
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleAuditGenerationComplete = async (data: AuditPackage) => {
-    setIsSyncing(true);
-    const userId = session?.user?.id;
-    const saved = await storageService.saveProject(data, userId);
-    setActiveProject(saved);
-    await loadUserData(userId);
-    setIsSyncing(false);
-    navigate(AppRoute.OUTPUT_VIEWER);
+  // Auth operations
+  const handleLogin = async (email: string, pass: string, isSignup: boolean, extra?: { firstName: string, lastName: string }) => {
+    if (isSignup) {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password: pass,
+        options: {
+          data: {
+            first_name: extra?.firstName || '',
+            last_name: extra?.lastName || '',
+          }
+        }
+      });
+      if (error) throw error;
+      return data;
+    } else {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+      if (error) throw error;
+      return data;
+    }
   };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    navigate(AppRoute.LANDING);
   };
 
-  if (globalError) {
-    return (
-      <div className="min-h-screen bg-techBlack flex flex-col items-center justify-center text-white p-6">
-        <AlertCircle size={48} className="text-riskHigh mb-4" />
-        <h2 className="text-xl font-bold mb-4">{globalError}</h2>
-        <button onClick={() => window.location.reload()} className="bg-brightBlue px-6 py-2 rounded-lg font-bold">Retry Connection</button>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-techBlack flex flex-col items-center justify-center text-white p-6">
-        <div className="w-16 h-16 border-4 border-brightBlue border-t-transparent rounded-full animate-spin mb-4"></div>
-        <h2 className="text-xs font-black tracking-[0.4em] text-steelGrey uppercase">Synchronizing Neural Workspace</h2>
-      </div>
-    );
-  }
-
-  // Route Rendering
-  const renderPublicPage = () => {
-    switch (currentRoute) {
-      case AppRoute.FEATURES: return <FeaturesPage navigate={navigate} />;
-      case AppRoute.PRICING: return <PricingPage navigate={navigate} />;
-      case AppRoute.ABOUT: return <AboutPage navigate={navigate} />;
-      case AppRoute.CONTACT: return <ContactPage navigate={navigate} />;
-      case AppRoute.SECURITY: return <SecurityPage navigate={navigate} />;
-      case AppRoute.FAQ: return <FAQPage navigate={navigate} />;
-      case AppRoute.HELP: return <HelpCenterPage navigate={navigate} />;
-      case AppRoute.TUTORIALS: return <TutorialsPage navigate={navigate} />;
-      case AppRoute.PRIVACY: return <LegalPage navigate={navigate} type="Privacy Policy" />;
-      case AppRoute.TERMS: return <LegalPage navigate={navigate} type="Terms of Service" />;
-      case AppRoute.COOKIES: return <LegalPage navigate={navigate} type="Cookie Policy" />;
-      case AppRoute.DPA: return <LegalPage navigate={navigate} type="Data Processing Agreement" />;
-      case AppRoute.GET_STARTED: return <GetStartedPage navigate={navigate} />;
-      case AppRoute.LOGIN: return <AuthPage onLogin={async (e, p, s, x) => {
-        if (s) return supabase.auth.signUp({ email: e, password: p, options: { data: { first_name: x?.firstName, last_name: x?.lastName } } });
-        return supabase.auth.signInWithPassword({ email: e, password: p });
-      }} navigate={navigate} />;
-      default: return null;
+  // Project lifecycle management
+  const handleProjectComplete = async (data: AuditPackage) => {
+    if (userProfile) {
+      const saved = await storageService.saveProject(data, userProfile.id);
+      setCurrentProject(saved);
+      await fetchProjects(userProfile.id);
+      setCurrentRoute(AppRoute.OUTPUT_VIEWER);
     }
   };
 
-  const publicContent = renderPublicPage();
-  if (publicContent) return publicContent;
+  const handleSaveProject = async (data: AuditPackage) => {
+    if (userProfile) {
+      setIsSyncing(true);
+      const saved = await storageService.saveProject(data, userProfile.id);
+      setCurrentProject(saved);
+      await fetchProjects(userProfile.id);
+      setIsSyncing(false);
+    }
+  };
 
-  if (!session) return <LandingPage onEnterWorkspace={() => navigate(AppRoute.LOGIN)} navigate={navigate} />;
+  const handleDeleteProject = async (id: string) => {
+    if (confirm("Permanently delete this project?")) {
+      const success = await storageService.deleteProject(id);
+      if (success && userProfile) {
+        if (currentProject?.id === id) setCurrentProject(null);
+        await fetchProjects(userProfile.id);
+      }
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-techBlack flex items-center justify-center">
+        <Loader2 className="animate-spin text-brightBlue" size={48} />
+      </div>
+    );
+  }
+
+  const renderContent = () => {
+    switch (currentRoute) {
+      case AppRoute.LANDING:
+        return <LandingPage onEnterWorkspace={() => handleNavigate(isLoggedIn ? AppRoute.DASHBOARD : AppRoute.LOGIN)} navigate={handleNavigate} />;
+      case AppRoute.LOGIN:
+        return <AuthPage onLogin={handleLogin} navigate={handleNavigate} />;
+      case AppRoute.DASHBOARD:
+        return <Dashboard navigate={handleNavigate} savedProjects={savedProjects} profile={userProfile} onSelectProject={(p) => { setCurrentProject(p); handleNavigate(AppRoute.OUTPUT_VIEWER); }} />;
+      case AppRoute.PROJECT_WIZARD:
+        return <ProjectWorkspace onComplete={handleProjectComplete} navigate={handleNavigate} profile={userProfile} />;
+      case AppRoute.OUTPUT_VIEWER:
+        return <OutputViewer data={currentProject} savedProjects={savedProjects} onSave={handleSaveProject} onDelete={handleDeleteProject} onBack={() => handleNavigate(AppRoute.DASHBOARD)} onSelectProject={(p) => setCurrentProject(p)} navigate={handleNavigate} />;
+      case AppRoute.CHECKLIST:
+        return <ChecklistMode data={currentProject} navigate={handleNavigate} onUpdate={(items) => currentProject && handleSaveProject({ ...currentProject, checklist: items })} />;
+      case AppRoute.GAP_TRACKING:
+        return <GapTracking data={currentProject} navigate={handleNavigate} onUpdate={(gaps) => currentProject && handleSaveProject({ ...currentProject, gaps: gaps })} />;
+      case AppRoute.RENEWAL:
+        return <RenewalMode data={currentProject} navigate={handleNavigate} onChecklistUpdate={(items) => currentProject && handleSaveProject({ ...currentProject, checklist: items })} profile={userProfile} onRefreshProfile={() => userProfile && refreshProfile(userProfile.id)} />;
+      case AppRoute.TEAM:
+        return <TeamManagement profile={userProfile} navigate={handleNavigate} />;
+      case AppRoute.SETTINGS:
+        return <Settings profile={userProfile} onRefresh={() => userProfile && refreshProfile(userProfile.id)} />;
+      
+      // Public Information Pages
+      case AppRoute.FEATURES: return <FeaturesPage navigate={handleNavigate} />;
+      case AppRoute.PRICING: return <PricingPage navigate={handleNavigate} />;
+      case AppRoute.ABOUT: return <AboutPage navigate={handleNavigate} />;
+      case AppRoute.CONTACT: return <ContactPage navigate={handleNavigate} />;
+      case AppRoute.SECURITY: return <SecurityPage navigate={handleNavigate} />;
+      case AppRoute.PRIVACY: return <LegalPage navigate={handleNavigate} type="Privacy Policy" />;
+      case AppRoute.TERMS: return <LegalPage navigate={handleNavigate} type="Terms of Service" />;
+      case AppRoute.COOKIES: return <LegalPage navigate={handleNavigate} type="Cookie Policy" />;
+      case AppRoute.HELP: return <HelpCenterPage navigate={handleNavigate} />;
+      case AppRoute.TUTORIALS: return <TutorialsPage navigate={handleNavigate} />;
+      case AppRoute.FAQ: return <FAQPage navigate={handleNavigate} />;
+      case AppRoute.GET_STARTED: return <GetStartedPage navigate={handleNavigate} />;
+      
+      default:
+        return <Dashboard navigate={handleNavigate} savedProjects={savedProjects} profile={userProfile} onSelectProject={(p) => { setCurrentProject(p); handleNavigate(AppRoute.OUTPUT_VIEWER); }} />;
+    }
+  };
 
   return (
-    <Layout currentRoute={currentRoute} navigate={navigate} isLoggedIn={true} onLogout={handleLogout} isSyncing={isSyncing}>
-      {currentRoute === AppRoute.DASHBOARD && <Dashboard navigate={navigate} savedProjects={savedProjects} profile={profile} onSelectProject={(p) => { setActiveProject(p); navigate(AppRoute.OUTPUT_VIEWER); }} />}
-      {currentRoute === AppRoute.PROJECT_WIZARD && <ProjectWorkspace onComplete={handleAuditGenerationComplete} navigate={navigate} profile={profile} />}
-      {currentRoute === AppRoute.OUTPUT_VIEWER && <OutputViewer data={activeProject} savedProjects={savedProjects} onSave={(d) => storageService.saveProject(d, session.user.id)} onDelete={async (id) => { await storageService.deleteProject(id); loadUserData(session.user.id); }} onBack={() => navigate(AppRoute.DASHBOARD)} onSelectProject={setActiveProject} onNavigateToChecklist={() => navigate(AppRoute.CHECKLIST)} navigate={navigate} />}
-      {currentRoute === AppRoute.CHECKLIST && <ChecklistMode data={activeProject} navigate={navigate} onUpdate={(c) => storageService.saveProject({ ...activeProject!, checklist: c }, session.user.id)} />}
-      {currentRoute === AppRoute.GAP_TRACKING && <GapTracking data={activeProject} navigate={navigate} onUpdate={(g) => storageService.saveProject({ ...activeProject!, gaps: g }, session.user.id)} />}
-      {currentRoute === AppRoute.RENEWAL && <RenewalMode data={activeProject} navigate={navigate} profile={profile} onRefreshProfile={() => loadUserData(session.user.id)} onChecklistUpdate={(c) => storageService.saveProject({ ...activeProject!, checklist: c }, session.user.id)} />}
-      {currentRoute === AppRoute.TEAM && <TeamManagement profile={profile} navigate={navigate} />}
-      {currentRoute === AppRoute.SETTINGS && <Settings profile={profile} onRefresh={() => loadUserData(session.user.id)} />}
-    </Layout>
+    <ErrorBoundary>
+      <Layout 
+        currentRoute={currentRoute} 
+        navigate={handleNavigate} 
+        isLoggedIn={isLoggedIn} 
+        onLogout={handleLogout}
+        isSyncing={isSyncing}
+      >
+        {renderContent()}
+      </Layout>
+    </ErrorBoundary>
   );
 };
 

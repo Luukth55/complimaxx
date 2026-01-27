@@ -8,14 +8,8 @@ export const generateAuditPackage = async (
   frameworks: string[]
 ): Promise<AuditPackage> => {
   // Always obtain API key from process.env.API_KEY as per instructions.
-  // We initialize inside the function to ensure we use the latest injected key.
-  const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : '';
-  
-  if (!apiKey) {
-    throw new Error("API Key is missing. Please configure your environment variables.");
-  }
-
-  const ai = new GoogleGenAI({ apiKey });
+  // Initialize with named parameter 'apiKey'.
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   const auditPackageSchema: any = {
     type: Type.OBJECT,
@@ -131,6 +125,7 @@ export const generateAuditPackage = async (
   Ensure high structural integrity.`;
 
   try {
+    // Generate content using gemini-3-pro-preview for complex reasoning tasks.
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: `Build a compliance pack for: ${processName}. Context: ${processDescription}`,
@@ -142,6 +137,7 @@ export const generateAuditPackage = async (
       },
     });
 
+    // Extract text output directly from .text property.
     const result = response.text;
     if (!result) throw new Error("No response from AI engine.");
     
