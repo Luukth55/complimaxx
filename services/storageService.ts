@@ -7,24 +7,23 @@ const LOCAL_STORAGE_KEY = 'complimaxx_local_projects';
 export const storageService = {
   async getProjects(userId?: string): Promise<AuditPackage[]> {
     if (isSupabaseConfigured && userId) {
-      const { data, error } = await supabase
-        .from('audit_projects')
-        .select('*')
-        .eq('user_id', userId)
-        .order('updated_at', { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from('audit_projects')
+          .select('*')
+          .eq('user_id', userId)
+          .order('updated_at', { ascending: false });
 
-      if (error) {
-        console.error("Supabase Fetch Error:", error.message);
-        return this.getLocalFallback();
-      }
+        if (error) throw error;
 
-      if (data) {
-        return data.map((d: any) => ({ 
+        return (data || []).map((d: any) => ({ 
           ...d.content, 
           id: d.id, 
           user_id: d.user_id,
           savedAt: d.updated_at 
         }));
+      } catch (err) {
+        console.error("Supabase Fetch Error:", err);
       }
     }
     return this.getLocalFallback();
@@ -36,101 +35,63 @@ export const storageService = {
   },
 
   async saveProject(data: AuditPackage, userId?: string): Promise<AuditPackage> {
-    const frameworks = data.framework_mapping?.map(f => f.framework) || [];
-    const score = data.audit_score?.total_score || 0;
-    
-    const totalTasks = data.checklist?.length || 0;
-    const completedTasks = data.checklist?.filter(t => t.status === 'Complete').length || 0;
-    let status = 'In Progress';
-    if (totalTasks > 0 && totalTasks === completedTasks) status = 'Completed';
-    if (totalTasks === 0) status = 'Draft';
-
     if (isSupabaseConfigured && userId) {
+      const frameworks = data.framework_mapping?.map(f => f.framework) || [];
+      const score = data.audit_score?.total_score || 0;
+      
       const payload = {
         user_id: userId,
-        title: data.project_title || data.process_flow?.[0]?.title || 'Untitled Project',
+        title: data.project_title || 'Untitled Project',
         frameworks: frameworks,
         readiness_score: score,
-        status: status,
-        content: { 
-          ...data, 
-          id: undefined, 
-          user_id: undefined, 
-          savedAt: undefined 
-        },
+        status: 'Active',
+        content: data,
         updated_at: new Date().toISOString()
       };
 
       try {
         let result;
-        if (data.id && data.id.length > 20 && !data.id.startsWith('local-')) {
-          result = await supabase
-            .from('audit_projects')
-            .update(payload)
-            .eq('id', data.id)
-            .select();
+        if (data.id && data.id.length > 30) {
+          result = await supabase.from('audit_projects').update(payload).eq('id', data.id).select();
         } else {
-          result = await supabase
-            .from('audit_projects')
-            .insert([payload])
-            .select();
+          result = await supabase.from('audit_projects').insert([payload]).select();
         }
 
         if (result.error) throw result.error;
-
-        if (result.data && result.data[0]) {
-          const savedItem = result.data[0];
-          return { 
-            ...savedItem.content, 
-            id: savedItem.id, 
-            user_id: savedItem.user_id, 
-            savedAt: savedItem.updated_at 
-          };
-        }
-      } catch (err: any) {
-        console.error("Supabase Save Error:", err.message);
+        const saved = result.data[0];
+        return { ...saved.content, id: saved.id, user_id: saved.user_id, savedAt: saved.updated_at };
+      } catch (err) {
+        console.error("Save failed:", err);
       }
     }
 
-    const localProjects = this.getLocalFallback();
+    // Local fallback
+    const local = this.getLocalFallback();
     const newId = data.id || `local-${Date.now()}`;
     const newProject = { ...data, id: newId, savedAt: new Date().toISOString() };
-    
-    const updatedProjects = localProjects.find(p => p.id === newId)
-      ? localProjects.map(p => p.id === newId ? newProject : p)
-      : [newProject, ...localProjects];
-
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedProjects));
+    const updated = local.find(p => p.id === newId) ? local.map(p => p.id === newId ? newProject : p) : [newProject, ...local];
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
     return newProject;
   },
 
   async deleteProject(id: string): Promise<boolean> {
-    if (isSupabaseConfigured && id.length > 20 && !id.startsWith('local-')) {
-      const { error } = await supabase
-        .from('audit_projects')
-        .delete()
-        .eq('id', id);
+    if (isSupabaseConfigured && id.length > 30) {
+      const { error } = await supabase.from('audit_projects').delete().eq('id', id);
       return !error;
     }
-    const localProjects = this.getLocalFallback();
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(localProjects.filter(p => p.id !== id)));
+    const local = this.getLocalFallback();
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(local.filter(p => p.id !== id)));
     return true;
   },
 
   async getTeamMembers(companyName?: string): Promise<TeamMember[]> {
     if (isSupabaseConfigured && companyName) {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, email, role, updated_at')
-        .eq('company_name', companyName);
-      
-      if (error) return [];
-      
+      const { data } = await supabase.from('profiles').select('*').eq('company_name', companyName);
       return (data || []).map(d => ({
         id: d.id,
-        name: `${d.first_name} ${d.last_name}`.trim() || 'Team Member',
-        email: d.email || '',
-        role: (d.role as any) || 'Editor',
+        name: `${d.first_name} ${d.last_name}`,
+        email: d.email,
+        role: d.role,
         status: 'Active',
         lastActive: new Date(d.updated_at).toLocaleDateString()
       }));
@@ -139,63 +100,41 @@ export const storageService = {
   },
 
   async mockInviteMember(companyName: string, email: string, role: string): Promise<boolean> {
-    // In a full implementation, this would insert into an 'invites' table
-    // or create a new profile with a 'Pending' status.
-    // For this demonstration, we'll simulate success.
-    console.log(`Mock inviting ${email} to ${companyName} as ${role}`);
-    await new Promise(resolve => setTimeout(resolve, 800));
+    console.log(`Inviting ${email} to ${companyName} as ${role}`);
+    await new Promise(r => setTimeout(r, 1000));
     return true;
   },
 
   async deductCredit(userId: string): Promise<boolean> {
     if (!isSupabaseConfigured) return true;
-
-    const { data: profile, error: fetchError } = await supabase
-      .from('profiles')
-      .select('credits_remaining, plan')
-      .eq('id', userId)
-      .single();
-
-    if (fetchError || !profile) return false;
+    const { data: profile } = await supabase.from('profiles').select('credits_remaining, plan').eq('id', userId).single();
+    if (!profile || (profile.plan !== 'Enterprise' && profile.credits_remaining <= 0)) return false;
     
     if (profile.plan === 'Enterprise') return true;
-    if (profile.credits_remaining <= 0) return false;
 
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ 
-        credits_remaining: profile.credits_remaining - 1,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', userId);
-
-    return !updateError;
+    const { error } = await supabase.from('profiles').update({ 
+      credits_remaining: profile.credits_remaining - 1,
+      updated_at: new Date().toISOString()
+    }).eq('id', userId);
+    return !error;
   },
 
   async upgradePlan(userId: string, plan: UserPlan): Promise<boolean> {
     if (!isSupabaseConfigured) return false;
-
-    const planConfig = {
+    const config = {
       Essentials: { fw: 2, users: 1, credits: 15 },
       Pro: { fw: 10, users: 3, credits: 60 },
       Enterprise: { fw: 96, users: 10, credits: 9999 }
-    };
+    }[plan];
 
-    const config = planConfig[plan];
-
-    const { error } = await supabase
-      .from('profiles')
-      .update({ 
-        plan, 
-        is_pro: plan !== 'Essentials',
-        framework_limit: config.fw,
-        user_limit: config.users,
-        credits_total: config.credits,
-        credits_remaining: config.credits,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', userId);
-
+    const { error } = await supabase.from('profiles').update({ 
+      plan,
+      framework_limit: config.fw,
+      user_limit: config.users,
+      credits_remaining: config.credits,
+      credits_total: config.credits,
+      updated_at: new Date().toISOString()
+    }).eq('id', userId);
     return !error;
   }
 };
