@@ -17,18 +17,26 @@ const Settings: React.FC<SettingsProps> = ({ profile, onRefresh }) => {
   const [error, setError] = useState<string | null>(null);
   
   const [localProfile, setLocalProfile] = useState({
-    full_name: profile?.first_name + ' ' + profile?.last_name || '',
+    full_name: (profile?.first_name || '') + ' ' + (profile?.last_name || ''),
     company_name: profile?.company_name || '',
     industry: profile?.industry || 'SaaS / Tech',
     role: profile?.role || 'Admin'
   });
+
+  const getApiKeyStatus = () => {
+    try {
+      return typeof process !== 'undefined' && !!process.env.API_KEY;
+    } catch {
+      return false;
+    }
+  };
 
   const handleSave = async () => {
     if (!isSupabaseConfigured || !profile) return;
     setSaving(true);
     setError(null);
     try {
-      const names = localProfile.full_name.split(' ');
+      const names = localProfile.full_name.trim().split(' ');
       const firstName = names[0] || '';
       const lastName = names.slice(1).join(' ') || '';
 
@@ -177,7 +185,7 @@ const Settings: React.FC<SettingsProps> = ({ profile, onRefresh }) => {
                     <h4 className="text-white font-bold flex items-center uppercase tracking-widest text-xs"><Database size={18} className="mr-2 text-brightBlue"/> Infrastructure Diagnostics</h4>
                     <div className="space-y-3">
                         <StatusRow label="Cloud DB" status={isSupabaseConfigured} detail="Supabase PostgreSQL connectivity." />
-                        <StatusRow label="Gemini AI" status={!!process.env.API_KEY} detail="Google GenAI API Key verification." />
+                        <StatusRow label="Gemini AI" status={getApiKeyStatus()} detail="Google GenAI API Key verification." />
                     </div>
                 </div>
             )}

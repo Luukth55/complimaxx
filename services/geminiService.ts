@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { AuditPackage } from "../types";
 
@@ -215,6 +214,7 @@ export const generateAuditPackage = async (
   processDescription: string,
   frameworks: string[]
 ): Promise<AuditPackage> => {
+  // Always use `new GoogleGenAI({apiKey: process.env.API_KEY});` as per guidelines.
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   const systemInstruction = `You are a world-class Chief Audit Executive and GRC Architect.
@@ -241,8 +241,9 @@ export const generateAuditPackage = async (
   `;
 
   try {
+    // Using 'gemini-3-pro-preview' for complex text tasks involving reasoning and logic.
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview',
       contents: prompt,
       config: {
         systemInstruction,
@@ -252,6 +253,7 @@ export const generateAuditPackage = async (
       },
     });
 
+    // Access .text property directly as it returns string | undefined
     const text = response.text;
     if (!text) throw new Error("The AI engine returned an empty response.");
 

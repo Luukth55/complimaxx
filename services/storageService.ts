@@ -39,7 +39,6 @@ export const storageService = {
     const frameworks = data.framework_mapping?.map(f => f.framework) || [];
     const score = data.audit_score?.total_score || 0;
     
-    // Bereken status op basis van checklist voortgang
     const totalTasks = data.checklist?.length || 0;
     const completedTasks = data.checklist?.filter(t => t.status === 'Complete').length || 0;
     let status = 'In Progress';
@@ -64,7 +63,6 @@ export const storageService = {
 
       try {
         let result;
-        // Check of het een bestaand project is (UUID check)
         if (data.id && data.id.length > 20 && !data.id.startsWith('local-')) {
           result = await supabase
             .from('audit_projects')
@@ -94,7 +92,6 @@ export const storageService = {
       }
     }
 
-    // Fallback naar LocalStorage
     const localProjects = this.getLocalFallback();
     const newId = data.id || `local-${Date.now()}`;
     const newProject = { ...data, id: newId, savedAt: new Date().toISOString() };
@@ -131,7 +128,7 @@ export const storageService = {
       
       return (data || []).map(d => ({
         id: d.id,
-        name: `${d.first_name} ${d.last_name}` || 'Team Member',
+        name: `${d.first_name} ${d.last_name}`.trim() || 'Team Member',
         email: d.email || '',
         role: (d.role as any) || 'Editor',
         status: 'Active',
@@ -141,10 +138,18 @@ export const storageService = {
     return [];
   },
 
+  async mockInviteMember(companyName: string, email: string, role: string): Promise<boolean> {
+    // In a full implementation, this would insert into an 'invites' table
+    // or create a new profile with a 'Pending' status.
+    // For this demonstration, we'll simulate success.
+    console.log(`Mock inviting ${email} to ${companyName} as ${role}`);
+    await new Promise(resolve => setTimeout(resolve, 800));
+    return true;
+  },
+
   async deductCredit(userId: string): Promise<boolean> {
     if (!isSupabaseConfigured) return true;
 
-    // Haal huidige credits op
     const { data: profile, error: fetchError } = await supabase
       .from('profiles')
       .select('credits_remaining, plan')
@@ -156,7 +161,6 @@ export const storageService = {
     if (profile.plan === 'Enterprise') return true;
     if (profile.credits_remaining <= 0) return false;
 
-    // Trek credit af
     const { error: updateError } = await supabase
       .from('profiles')
       .update({ 

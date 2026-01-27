@@ -1,7 +1,6 @@
 
 import React from 'react';
-/* Added RefreshCw to lucide-react imports */
-import { Plus, Shield, CheckCircle, AlertTriangle, FileText, Cloud, Zap, Clock, TrendingUp, Layers, ArrowRight, Folder, UserCheck, Star, Users, History, Check, Activity, Calendar, RefreshCw } from 'lucide-react';
+import { Plus, Shield, CheckCircle, AlertTriangle, FileText, Cloud, Zap, Clock, TrendingUp, Layers, ArrowRight, Folder, UserCheck, Star, Users, History, Check, Activity, Calendar, RefreshCw, CreditCard } from 'lucide-react';
 import { AppRoute, AuditPackage, UserProfile } from '../types';
 
 interface DashboardProps {
@@ -32,9 +31,9 @@ const HealthMeter = ({ score }: { score: number }) => (
 const Dashboard: React.FC<DashboardProps> = ({ navigate, savedProjects, profile, onSelectProject }) => {
   const recentProjects = savedProjects.slice(0, 3);
   const credits = profile?.credits_remaining ?? 0;
+  const planName = profile?.plan ?? 'Essentials';
   const isEnterprise = profile?.plan === 'Enterprise';
   
-  // Calculate aggregate health score from projects
   const avgHealth = savedProjects.length > 0 
     ? Math.round(savedProjects.reduce((acc, p) => acc + (p.audit_score?.total_score || 0), 0) / savedProjects.length)
     : 0;
@@ -42,7 +41,7 @@ const Dashboard: React.FC<DashboardProps> = ({ navigate, savedProjects, profile,
   return (
     <div className="space-y-10 animate-fadeIn font-sans pb-20">
       
-      {/* 1. TOP SECTION: COMMAND CENTER */}
+      {/* TOP SECTION: COMMAND CENTER & SUBSCRIPTION */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 bg-gradient-to-br from-obsidianNavy to-techBlack border border-white/10 p-12 rounded-[50px] shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-center gap-12">
             <div className="absolute right-0 top-0 h-full w-1/4 bg-brightBlue/5 skew-x-12 transform origin-bottom-right"></div>
@@ -55,7 +54,7 @@ const Dashboard: React.FC<DashboardProps> = ({ navigate, savedProjects, profile,
                     </span>
                 </div>
                 <p className="text-steelGrey text-sm font-medium mb-8 leading-relaxed">
-                    Complimaxx is monitoring <span className="text-white font-bold">{savedProjects.length} audit-ready frameworks</span>. 
+                    Monitoring <span className="text-white font-bold">{savedProjects.length} audit-ready frameworks</span>. 
                     Daily control execution is currently <span className="text-emerald-500 font-bold">Optimal</span>.
                 </p>
                 <div className="flex gap-4">
@@ -75,29 +74,38 @@ const Dashboard: React.FC<DashboardProps> = ({ navigate, savedProjects, profile,
             </div>
         </div>
 
-        {/* AI INSIGHTS CARD */}
-        <div className="bg-obsidianNavy border border-brightBlue/20 p-10 rounded-[40px] shadow-2xl relative overflow-hidden flex flex-col">
-            <div className="absolute top-0 right-0 p-6 opacity-20"><Zap size={48} className="text-brightBlue" /></div>
+        {/* SUBSCRIPTION & CREDITS CARD */}
+        <div className="bg-gradient-to-br from-brightBlue/10 to-transparent border border-brightBlue/20 p-10 rounded-[40px] shadow-2xl relative overflow-hidden flex flex-col">
+            <div className="absolute top-0 right-0 p-6 opacity-20"><CreditCard size={48} className="text-brightBlue" /></div>
             <h3 className="text-[10px] font-black text-brightBlue uppercase tracking-[0.4em] mb-6 flex items-center">
-                <Zap size={14} className="mr-2"/> AI Compliance Pulse
+                <Shield size={14} className="mr-2"/> Subscription Status
             </h3>
-            <div className="flex-1 space-y-6">
-                <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                    <p className="text-xs text-white font-bold mb-1">Evidence Drift Detected</p>
-                    <p className="text-[10px] text-steelGrey uppercase tracking-widest">ISO 27001 evidence for 'Backup Logs' expires in 4 days.</p>
+            
+            <div className="space-y-6 flex-1">
+              <div>
+                <p className="text-[10px] text-steelGrey uppercase tracking-widest mb-1">Current Plan</p>
+                <p className="text-3xl font-black text-white uppercase tracking-tight">{planName}</p>
+              </div>
+              
+              <div className="flex items-end justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+                <div>
+                  <p className="text-[10px] text-steelGrey uppercase tracking-widest mb-1">AI Credits</p>
+                  <p className="text-2xl font-black text-white">{isEnterprise ? '∞' : credits}</p>
                 </div>
-                <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                    <p className="text-xs text-white font-bold mb-1">Gap Suggestion</p>
-                    <p className="text-[10px] text-steelGrey uppercase tracking-widest">New NEN 7510 requirements for AI in healthcare now available for mapping.</p>
-                </div>
+                <Zap size={24} className="text-brightBlue mb-1" />
+              </div>
             </div>
-            <button onClick={() => navigate(AppRoute.GAP_TRACKING)} className="mt-8 text-[10px] font-black text-steelGrey uppercase tracking-[0.3em] hover:text-white transition-colors flex items-center">
-                Resolve Findings <ArrowRight size={14} className="ml-2" />
+
+            <button 
+              onClick={() => navigate(AppRoute.SETTINGS)} 
+              className="mt-8 bg-brightBlue/10 hover:bg-brightBlue/20 text-brightBlue text-[10px] font-black py-4 rounded-xl uppercase tracking-[0.3em] transition-all flex items-center justify-center border border-brightBlue/20"
+            >
+                Upgrade Plan <ArrowRight size={14} className="ml-2" />
             </button>
         </div>
       </div>
 
-      {/* 2. COMPLIANCE LIFECYCLE TRACKER */}
+      {/* COMPLIANCE LIFECYCLE TRACKER */}
       <div className="bg-obsidianNavy border border-white/5 rounded-[40px] p-12 shadow-2xl overflow-hidden relative">
           <div className="flex justify-between items-center mb-12">
              <h3 className="text-xs font-black text-white uppercase tracking-[0.4em] flex items-center">
@@ -128,15 +136,12 @@ const Dashboard: React.FC<DashboardProps> = ({ navigate, savedProjects, profile,
                     <span className={`text-[10px] font-black uppercase tracking-widest mt-6 ${step.status === 'Active' ? 'text-white' : 'text-steelGrey'}`}>
                         {step.label}
                     </span>
-                    <span className="text-[8px] font-bold text-brightBlue uppercase tracking-widest mt-1 opacity-60">
-                        {step.status}
-                    </span>
                 </div>
               ))}
           </div>
       </div>
 
-      {/* 3. RECENT ACTIVITY & PROJECTS GRID */}
+      {/* RECENT ACTIVITY & PROJECTS GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 bg-obsidianNavy border border-white/5 rounded-[40px] p-12 shadow-2xl">
               <div className="flex justify-between items-center mb-10">
@@ -144,7 +149,7 @@ const Dashboard: React.FC<DashboardProps> = ({ navigate, savedProjects, profile,
                  <button onClick={() => navigate(AppRoute.OUTPUT_VIEWER)} className="text-[10px] font-black text-steelGrey uppercase hover:text-white transition-all">View Library</button>
               </div>
               <div className="space-y-4">
-                {recentProjects.map(p => (
+                {recentProjects.length > 0 ? recentProjects.map(p => (
                   <div 
                     key={p.id} 
                     onClick={() => onSelectProject(p)}
@@ -168,7 +173,11 @@ const Dashboard: React.FC<DashboardProps> = ({ navigate, savedProjects, profile,
                     </div>
                     <ArrowRight size={18} className="text-steelGrey opacity-0 group-hover:opacity-100 transition-all -translate-x-4 group-hover:translate-x-0" />
                   </div>
-                ))}
+                )) : (
+                  <div className="p-12 text-center border border-dashed border-white/5 rounded-3xl">
+                    <p className="text-steelGrey text-xs font-bold uppercase tracking-widest">No active frameworks yet.</p>
+                  </div>
+                )}
               </div>
           </div>
 

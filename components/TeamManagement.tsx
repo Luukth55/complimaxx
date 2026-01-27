@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Users, Shield, UserPlus, Trash2, Loader2, Mail, Clock, AlertTriangle, Lock } from 'lucide-react';
+import { Users, Shield, UserPlus, Trash2, Loader2, Mail, Clock, AlertTriangle, Lock, X, CheckCircle } from 'lucide-react';
 import { TeamMember, UserProfile } from '../types';
 import { storageService } from '../services/storageService';
 
@@ -12,25 +12,58 @@ interface TeamManagementProps {
 const TeamManagement: React.FC<TeamManagementProps> = ({ profile, navigate }) => {
   const [users, setUsers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<'Editor' | 'Viewer'>('Editor');
+  const [inviting, setInviting] = useState(false);
+  const [inviteSuccess, setInviteSuccess] = useState(false);
 
   const companyName = profile?.company_name;
   const userLimit = profile?.user_limit || 1;
   const isLimitReached = users.length >= userLimit;
 
   useEffect(() => {
-    const loadTeam = async () => {
-      setLoading(true);
-      if (companyName) {
-        const members = await storageService.getTeamMembers(companyName);
-        setUsers(members);
-      }
-      setLoading(false);
-    };
     loadTeam();
   }, [companyName]);
 
-  const removeUser = (id: string) => {
+  const loadTeam = async () => {
+    setLoading(true);
+    if (companyName) {
+      const members = await storageService.getTeamMembers(companyName);
+      setUsers(members);
+    }
+    setLoading(false);
+  };
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail || isLimitReached) return;
+
+    setInviting(true);
+    try {
+      // In a real app, this would send an email. For this demo, we mock the addition
+      // but you can extend storageService to actually save an "invite" record.
+      const success = await storageService.mockInviteMember(companyName!, inviteEmail, inviteRole);
+      if (success) {
+        setInviteSuccess(true);
+        setTimeout(() => {
+          setInviteSuccess(false);
+          setIsInviteModalOpen(false);
+          setInviteEmail('');
+          loadTeam();
+        }, 1500);
+      }
+    } catch (err) {
+      console.error("Invite failed:", err);
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const removeUser = async (id: string) => {
     if(confirm("Are you sure you want to remove this member?")) {
+        // In this demo, we'll just filter from local state, 
+        // in a real app, you'd call a storageService.removeMember
         setUsers(users.filter(u => u.id !== id));
     }
   };
@@ -52,18 +85,17 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ profile, navigate }) =>
           <p className="text-steelGrey text-sm">Organization: <span className="text-brightBlue font-bold">{companyName || 'Not Set'}</span> • Plan: <span className="text-white font-bold">{profile?.plan}</span></p>
         </div>
         
-        {isLimitReached ? (
-          <button 
-            onClick={() => navigate('settings')}
-            className="bg-white/5 border border-white/10 text-steelGrey px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest flex items-center shadow-lg transition-all group"
-          >
-            <Lock size={18} className="mr-2 text-riskHigh" /> Limit Reached (Upgrade)
-          </button>
-        ) : (
-          <button className="bg-brightBlue hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest flex items-center shadow-lg transition-all active:scale-95">
-            <UserPlus size={18} className="mr-2" /> Invite Member
-          </button>
-        )}
+        <button 
+          onClick={() => setIsInviteModalOpen(true)}
+          className={`px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest flex items-center shadow-lg transition-all active:scale-95 ${
+            isLimitReached 
+              ? 'bg-white/5 border border-white/10 text-steelGrey cursor-not-allowed' 
+              : 'bg-brightBlue hover:bg-blue-600 text-white'
+          }`}
+        >
+          {isLimitReached ? <Lock size={18} className="mr-2 text-riskHigh" /> : <UserPlus size={18} className="mr-2" />}
+          Invite Member
+        </button>
       </div>
 
       {isLimitReached && (
@@ -145,11 +177,75 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ profile, navigate }) =>
             </table>
         </div>
       </div>
+
+      {/* INVITE MODAL */}
+      {isInviteModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className="bg-obsidianNavy border border-white/10 rounded-[32px] w-full max-w-md shadow-2xl overflow-hidden animate-fadeIn">
+            <div className="p-8 border-b border-white/5 flex justify-between items-center bg-techBlack/40">
+              <h3 className="text-xl font-black text-white uppercase tracking-tight">Invite Member</h3>
+              <button onClick={() => setIsInviteModalOpen(false)} className="text-steelGrey hover:text-white transition-all"><X size={24} /></button>
+            </div>
+            
+            <form onSubmit={handleInvite} className="p-8 space-y-6">
+              <div className="space-y-4">
+                <label className="text-[10px] font-black text-steelGrey uppercase tracking-[0.4em]">Email Address</label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-steelGrey" size={16} />
+                  <input 
+                    required 
+                    type="email" 
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    placeholder="teammate@company.com"
+                    className="w-full bg-techBlack border border-white/10 rounded-xl pl-12 pr-4 py-4 text-sm font-bold text-white outline-none focus:border-brightBlue transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <label className="text-[10px] font-black text-steelGrey uppercase tracking-[0.4em]">Assigned Role</label>
+                <div className="grid grid-cols-2 gap-4">
+                  {(['Editor', 'Viewer'] as const).map(role => (
+                    <button
+                      key={role}
+                      type="button"
+                      onClick={() => setInviteRole(role)}
+                      className={`py-4 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+                        inviteRole === role 
+                          ? 'bg-brightBlue/10 border-brightBlue text-brightBlue' 
+                          : 'bg-techBlack border-white/10 text-steelGrey hover:border-white/20'
+                      }`}
+                    >
+                      {role}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {isLimitReached && (
+                <div className="p-4 bg-riskHigh/10 border border-riskHigh/20 rounded-xl text-riskHigh text-[10px] font-black uppercase tracking-widest flex items-center">
+                  <AlertTriangle size={14} className="mr-2" /> Upgrade to add more seats
+                </div>
+              )}
+
+              <button 
+                type="submit" 
+                disabled={inviting || !inviteEmail || isLimitReached || inviteSuccess}
+                className="w-full bg-brightBlue hover:bg-blue-600 disabled:opacity-50 text-white py-4 rounded-xl font-black text-xs uppercase tracking-[0.4em] shadow-xl transition-all flex items-center justify-center"
+              >
+                {inviting ? <Loader2 className="animate-spin mr-2" size={18} /> : inviteSuccess ? <CheckCircle className="mr-2" size={18} /> : <UserPlus className="mr-2" size={18} />}
+                {inviting ? 'Sending...' : inviteSuccess ? 'Sent!' : 'Send Invitation'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
       
       <div className="bg-brightBlue/5 border border-brightBlue/20 rounded-3xl p-8">
           <h4 className="text-white font-black uppercase tracking-widest text-xs mb-4">About Team Collaboration</h4>
           <p className="text-xs text-steelGrey leading-relaxed">
-              Complimaxx uses organization-based isolation. Users who fill in the same 'Company Name' in their settings are automatically grouped within this team overview.
+              Complimaxx uses organization-based isolation. Users who fill in the same 'Company Name' in their settings are automatically grouped within this team overview. Invitations will grant users access to your company's shared workspace.
           </p>
       </div>
     </div>

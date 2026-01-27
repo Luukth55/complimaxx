@@ -1,5 +1,6 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+// Added AlertCircle to fixed the 'Cannot find name' error
+import { AlertCircle } from 'lucide-react';
 import Layout from './components/Layout';
 import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
@@ -35,40 +36,11 @@ const App: React.FC = () => {
   const [savedProjects, setSavedProjects] = useState<AuditPackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [globalError, setGlobalError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const initAuth = async () => {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      setSession(currentSession);
-      
-      if (currentSession) {
-        await loadUserData(currentSession.user.id);
-      } else {
-        setLoading(false);
-      }
-
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-        setSession(session);
-        if (session) {
-          await loadUserData(session.user.id);
-        } else {
-          setProfile(null);
-          setSavedProjects([]);
-          setCurrentRoute(AppRoute.LANDING);
-          setLoading(false);
-        }
-      });
-
-      return () => subscription.unsubscribe();
-    };
-
-    initAuth();
-  }, []);
-
-  const loadUserData = async (userId: string) => {
+  const loadUserData = useCallback(async (userId: string) => {
     setLoading(true);
     try {
-      // Parallel laden voor snelheid
       const [projects, profileResult] = await Promise.all([
         storageService.getProjects(userId),
         supabase.from('profiles').select('*').eq('id', userId).single()
@@ -79,18 +51,63 @@ const App: React.FC = () => {
       if (profileResult.data) {
         setProfile(profileResult.data as UserProfile);
       } else {
-        // Als profiel er nog niet is (door trigger delay), probeer het na 2 seconden nog eens
-        setTimeout(async () => {
+        // Retry logic for profile creation delay
+        let retries = 0;
+        const maxRetries = 3;
+        const interval = setInterval(async () => {
+          retries++;
           const { data: retryData } = await supabase.from('profiles').select('*').eq('id', userId).single();
-          if (retryData) setProfile(retryData as UserProfile);
-        }, 2000);
+          if (retryData) {
+            setProfile(retryData as UserProfile);
+            clearInterval(interval);
+          } else if (retries >= maxRetries) {
+            clearInterval(interval);
+            console.error("Profile not found after retries");
+          }
+        }, 1500);
       }
     } catch (err) {
       console.error('Error loading user data:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        setSession(currentSession);
+        
+        if (currentSession) {
+          await loadUserData(currentSession.user.id);
+        } else {
+          setLoading(false);
+        }
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+          setSession(session);
+          if (session) {
+            await loadUserData(session.user.id);
+          } else {
+            setProfile(null);
+            setSavedProjects([]);
+            if (![AppRoute.LANDING, AppRoute.LOGIN, AppRoute.FEATURES, AppRoute.PRICING].includes(currentRoute)) {
+                setCurrentRoute(AppRoute.LANDING);
+            }
+            setLoading(false);
+          }
+        });
+
+        return () => subscription.unsubscribe();
+      } catch (e) {
+        setGlobalError("Initialization failed. Please refresh.");
+        setLoading(false);
+      }
+    };
+
+    initAuth();
+  }, [loadUserData]);
 
   const navigate = (route: AppRoute) => {
     setCurrentRoute(route);
@@ -143,7 +160,8 @@ const App: React.FC = () => {
     try {
       const saved = await storageService.saveProject(data, userId);
       setActiveProject(saved);
-      setSavedProjects(prev => prev.map(p => p.id === saved.id ? saved : p));
+      const updated = await storageService.getProjects(userId);
+      setSavedProjects(updated);
     } catch (err) {
       console.error('Save failed:', err);
     } finally {
@@ -160,31 +178,25 @@ const App: React.FC = () => {
   };
 
   const handleAuthAction = async (email: string, pass: string, isSignup: boolean, extra?: any) => {
-    let authResult;
     setLoading(true);
-    if (isSignup) {
-      authResult = await supabase.auth.signUp({ 
-        email, 
-        password: pass,
-        options: { data: { first_name: extra?.firstName, last_name: extra?.lastName } }
-      });
-      if (authResult.error) {
-        setLoading(false);
-        throw authResult.error;
+    try {
+      if (isSignup) {
+        const { data, error } = await supabase.auth.signUp({ 
+          email, 
+          password: pass,
+          options: { data: { first_name: extra?.firstName, last_name: extra?.lastName } }
+        });
+        if (error) throw error;
+        return data;
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+        if (error) throw error;
+        return data;
       }
-    } else {
-      authResult = await supabase.auth.signInWithPassword({ email, password: pass });
-      if (authResult.error) {
-        setLoading(false);
-        throw authResult.error;
-      }
+    } catch (err: any) {
+      setLoading(false);
+      throw err;
     }
-
-    if (authResult.data.user) {
-      await loadUserData(authResult.data.user.id);
-      navigate(AppRoute.DASHBOARD);
-    }
-    return authResult.data;
   };
 
   const handleLogout = async () => {
@@ -193,6 +205,16 @@ const App: React.FC = () => {
     setProfile(null);
     navigate(AppRoute.LANDING);
   };
+
+  if (globalError) {
+    return (
+        <div className="min-h-screen bg-techBlack flex flex-col items-center justify-center text-white p-6">
+            <AlertCircle size={48} className="text-riskHigh mb-4" />
+            <h2 className="text-xl font-bold mb-2">{globalError}</h2>
+            <button onClick={() => window.location.reload()} className="bg-brightBlue px-6 py-2 rounded-lg">Retry</button>
+        </div>
+    );
+  }
 
   if (loading) {
     return (
