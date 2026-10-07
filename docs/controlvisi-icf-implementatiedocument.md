@@ -2,6 +2,8 @@
 
 Versie 1.0 · 7 oktober 2026 · Status: concept ter bespreking (nog niets gebouwd in Lovable)
 
+> **Let op:** `controlvisi-samenvoeging-en-ai.md` voegt dit document samen met de specificatie (pakket + ICF, rollen, evidence, fasering, AI-aanpak) en **gaat bij strijd voor**. De Excelvoorbeeldbestanden van Allego en Essent staan buiten de repository en worden niet gebruikt als testbestand of mappingprofiel.
+
 ---
 
 ## 1. Doel en uitgangspunten
@@ -145,7 +147,7 @@ Stappen:
 
 Extra's:
 - Importeer ook historie (per maand een X of status) optioneel, als gearchiveerde uitvoering zonder bewijs.
-- Herken Allego- en Essent-achtige formaten als voorgedefinieerde mappingprofielen. Test hier mee.
+- Geen voorgedefinieerde mappingprofielen op basis van de Allego/Essent-voorbeeldbestanden (die worden niet gebruikt, zie samenvoegingsdocument §6); de koppeling gebeurt via het koppelscherm en AI-voorstel.
 - Behandel Excel als onbetrouwbare invoer: formules niet uitvoeren, cellen schoonmaken, grootte en aantal regels begrenzen.
 
 ### 6.3 Framework (risico's en controls)
@@ -302,7 +304,7 @@ Naar voorbeeld van Essent, met:
 
 | Fase | Inhoud | Resultaat |
 |---|---|---|
-| **0. Voorbereiding** | Overleg, beslissingen (§15), testbestanden Allego/Essent klaarzetten | Besluiten vastgelegd |
+| **0. Voorbereiding** | Overleg, beslissingen (§15), synthetische testbestanden klaarzetten | Besluiten vastgelegd |
 | **1. Fundament** | Datamodel, tenant-scheiding (RLS), rollen, audit trail-basis, i18n-structuur, afdelingen/rollen/mensen overnemen uit FitVisi, licentieveld | Veilige basis |
 | **2. Framework & instroom** | Framework-scherm, AI-generatie (concepten + goedkeuring), Excel-import (met mapping), lege start | Bedrijf heeft een framework |
 | **3. Uitvoering** | Jaarplanning, Mijn taken, bewijs, review, vergrendelen, bevindingen/acties | ICF draait |
@@ -317,7 +319,7 @@ Naar voorbeeld van Essent, met:
 ## 13. Testplan
 
 - **Functioneel:** per scherm een testscript (aanmaken, wijzigen, verwijderen, filteren).
-- **Import:** testbestanden Allego en Essent; foutgevallen (lege regels, dubbele nummers, onbekende waarden, grote bestanden, rare tekens, formules).
+- **Import:** synthetische, zelfgemaakte testbestanden; foutgevallen (lege regels, dubbele nummers, onbekende waarden, grote bestanden, rare tekens, formules).
 - **Rechten:** per rol wat wel en niet mag; functiescheiding; vergrendeling.
 - **Tenant-isolatie:** automatische testen op alle tabellen en bestandspaden.
 - **Audit trail:** wijzigingen verschijnen compleet; logboek is niet te wijzigen.
@@ -369,7 +371,7 @@ Naar voorbeeld van Essent, met:
 ## 16. Werkwijze met Lovable
 
 1. Eerst per fase de wijzigingen **bespreken en goedkeuren** (zoals afgesproken).
-2. Per fase een kort bouwverzoek (prompt) opstellen op basis van dit document, met testbestanden als voorbeeld.
+2. Per fase een kort bouwverzoek (prompt) opstellen op basis van dit document, met synthetische testbestanden als voorbeeld.
 3. Na elke stap controleren in de preview en de wijzigingen nalopen.
 4. Het bestaande project (Control Hub Pro / CompliMaxx) wordt hernoemd naar ControlVisi; Stripe verwijderen; taalkeuze toevoegen.
 5. Dit document is de bron; wijzigingen in besluiten hier bijwerken.
